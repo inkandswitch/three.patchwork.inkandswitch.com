@@ -19,4 +19,6 @@ test-results/
 /public/packages/sideboard/
 /public/packages/sync-indicator/
 /public/packages/comments-view/
+/public/packages/codemirror-base/
+/public/packages/doc-presence/
 .smoke-preview.config.mjs

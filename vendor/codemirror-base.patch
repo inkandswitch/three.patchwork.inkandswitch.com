@@ -1,0 +1,84 @@
+diff --git a/src/lib/extensions/presence.ts b/src/lib/extensions/presence.ts
+index 8ae2c6f..e4b04fd 100644
+--- a/src/lib/extensions/presence.ts
++++ b/src/lib/extensions/presence.ts
+@@ -45,11 +45,16 @@ type PresenceSelection = {
+   // Sender's Date.now(); used only as a change marker (not for clock comparison)
+   lastMoved: number;
+ };
+-type PresenceChannels = { selection: PresenceSelection | null };
++// automerge-repo 3's Presence carries no user id of its own, so our contact
++// url travels in the state, beside the selection
++type PresenceChannels = {
++  selection: PresenceSelection | null;
++  contactUrl: AutomergeUrl | null;
++};
+ 
+ // A remote peer's selection resolved to positions in the current document.
+-// `peerId` is unique per session, so two tabs of the same contact each get
+-// their own caret.
++// `peerId` is the publishing Repo (one per tab), so two tabs of the same
++// contact each get their own caret.
+ type RemoteSelection = {
+   peerId: string;
+   contactUrl: AutomergeUrl | null;
+@@ -66,7 +71,7 @@ type RemoteSelection = {
+  * Create a CodeMirror extension for live remote cursors, reconfigurable via a
+  * Compartment (same shape as the sync/diff/readOnly extensions).
+  *
+- * `contactUrl` is our identity: it travels as the Presence userId, and peers
++ * `contactUrl` is our identity: it travels in the presence state, and peers
+  * use it to mount our "contact-cursor" token and read our chosen color. It
+  * returning `null` renders no presence -- that's the state before the
+  * identity has loaded, and permanently so for read-only views. When the
+@@ -150,7 +155,11 @@ function presence(
+     markers(view) {
+       // Stable order, so the layer's pairwise DOM reuse matches each marker
+       // with the same peer's existing element across redraws.
+-      const selections = [...view.state.field(remoteSelectionField)].sort(
++      // A measure scheduled before the compartment swapped this extension out
++      // can run against a state that no longer has the field.
++      const selections = [
++        ...(view.state.field(remoteSelectionField, false) ?? []),
++      ].sort(
+         (a, b) => (a.peerId < b.peerId ? -1 : a.peerId > b.peerId ? 1 : 0)
+       );
+       const markers: PresenceCaretMarker[] = [];
+@@ -184,15 +193,12 @@ function presence(
+ 
+       constructor(view: EditorView) {
+         this.view = view;
+-        this.presence = new Presence<PresenceChannels>({
+-          handle,
+-          userId: contactUrl,
+-        });
+-        this.presence.start({ initialState: { selection: null } });
++        this.presence = new Presence<PresenceChannels>({ handle });
++        this.presence.start({ initialState: { selection: null, contactUrl } });
+         this.presence.on("update", this.refresh);
+         this.presence.on("snapshot", this.refresh);
+         this.presence.on("goodbye", this.refresh);
+-        this.presence.on("pruned", this.refresh);
++        this.presence.on("pruning", this.refresh);
+         // Closing the page sends a goodbye, which removes us from peers
+         // immediately instead of after the stale-peer timeout.
+         window.addEventListener("pagehide", this.stopPresence);
+@@ -295,15 +301,14 @@ function presence(
+         if (this.destroyed) return;
+         const doc = handle.doc();
+         const resolved: RemoteSelection[] = [];
+-        for (const peer of this.presence.getPeerStates().peers) {
+-          const peerId = String(peer.peerId);
++        for (const peer of Object.values(this.presence.getPeerStates().value)) {
++          const peerId = String(peer.originId);
+           const selection = peer.value?.selection ?? null;
+           if (!selection) continue;
+           try {
+             const from = A.getCursorPosition(doc, path, selection.start);
+             const to = A.getCursorPosition(doc, path, selection.end);
+-            const peerContactUrl =
+-              (peer.userId as AutomergeUrl | undefined) ?? null;
++            const peerContactUrl = peer.value?.contactUrl ?? null;
+             if (peerContactUrl) this.trackContactColor(peerContactUrl);
+             resolved.push({
+               peerId,

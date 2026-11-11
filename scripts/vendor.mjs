@@ -17,7 +17,7 @@
 //   node scripts/vendor.mjs check         check every patch applies cleanly
 import {spawnSync} from "node:child_process"
 import {createHash} from "node:crypto"
-import {cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs"
+import {cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs"
 import {tmpdir} from "node:os"
 import {dirname, join, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
@@ -37,6 +37,8 @@ const packages = {
 	sideboard: base,
 	"sync-indicator": base,
 	"comments-view": base,
+	"codemirror-base": base,
+	"doc-presence": base,
 }
 
 // a commit needs someone to have made it, and a build machine has no one
@@ -59,8 +61,17 @@ const stampFile = name => join(root, ".vendor", "build", `${name}.json`)
 const readPatch = name => (existsSync(patchFile(name)) ? readFileSync(patchFile(name), "utf8") : "")
 const hash = text => createHash("sha256").update(text).digest("hex")
 
-// copied from the built package, as pkg-base's own static tree has them
-const shipped = ["package.json", "dist", "example.js"]
+// what's copied from a package into the site, as pkg-base's own static tree
+// has it: a built package ships its package.json and dist/ (and example.js,
+// the example it seeds a new account with); a bundleless one, its top-level
+// modules and styles
+function shipped(dir) {
+	const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"))
+	if (manifest.scripts?.build) return ["package.json", "dist", "example.js"]
+	return readdirSync(dir).filter(
+		file => file === "package.json" || (/\.(js|css)$/.test(file) && !/\.test\.js$/.test(file))
+	)
+}
 
 // everything in .vendor/<name> that differs from the commit it was fetched at
 function changes(dir) {
@@ -105,11 +116,14 @@ async function build(name) {
 	await fetchSource(name, commit, dir)
 	apply(name, dir)
 	console.log(`vendor: building ${name}`)
-	run("pnpm", ["install", "--frozen-lockfile"], dir)
-	run("pnpm", ["run", "build"], dir)
+	const files = shipped(dir)
+	if (files.includes("dist")) {
+		run("pnpm", ["install", "--frozen-lockfile"], dir)
+		run("pnpm", ["run", "build"], dir)
+	}
 	rmSync(out, {recursive: true, force: true})
 	mkdirSync(out, {recursive: true})
-	for (const file of shipped) {
+	for (const file of files) {
 		if (existsSync(join(dir, file))) cpSync(join(dir, file), join(out, file), {recursive: true})
 	}
 	writeFileSync(stampFile(name), JSON.stringify(stamp))

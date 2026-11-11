@@ -1,0 +1,27 @@
+diff --git a/doc-presence.js b/doc-presence.js
+index e136584..1acedf1 100644
+--- a/doc-presence.js
++++ b/doc-presence.js
+@@ -67,18 +67,19 @@ function broadcastIdentity(session) {
+ 
+ function peersByContact(presence) {
+ 	const byContact = new Map()
+-	for (const peer of presence.getPeerStates().peers) {
++	// automerge-repo 3: peer states by publishing Repo (one per tab)
++	for (const peer of Object.values(presence.getPeerStates().value)) {
+ 		const value = peer.value
+ 		if (!value?.contactUrl || value.contactUrl === myContactUrl) continue
+ 		const existing = byContact.get(value.contactUrl)
+-		if (!existing || peer.lastUpdateAt > existing.lastUpdateAt) {
++		if (!existing || peer.lastActiveAt > existing.lastActiveAt) {
+ 			byContact.set(value.contactUrl, peer)
+ 		}
+ 	}
+ 	return [...byContact.values()]
+ }
+ 
+-const PEER_EVENTS = ["update", "snapshot", "goodbye", "pruned"]
++const PEER_EVENTS = ["update", "snapshot", "goodbye", "pruning"]
+ 
+ function joinDoc(handle) {
+ 	const url = handle.url
