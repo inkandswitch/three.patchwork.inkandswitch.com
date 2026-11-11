@@ -19,6 +19,9 @@ export default defineConfig({
 				attributes: {
 					"data-theme-light": "three-alto",
 					"data-theme-dark": "three-amber",
+					// seed only three's own examples (public/init.js), not the tools
+					// bundle's, whose tools three doesn't load
+					"data-examples": "site",
 				},
 			},
 			icons: {

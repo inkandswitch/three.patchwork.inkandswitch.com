@@ -10,6 +10,33 @@ index eee9b5d..78a04a0 100644
    find: async (url: AutomergeUrl) => {
      const handle = docs.get(url);
      if (!handle) throw new Error("no such doc");
+diff --git a/src/sideboard/document-list/document-list.tsx b/src/sideboard/document-list/document-list.tsx
+index 3462988..79f8300 100644
+--- a/src/sideboard/document-list/document-list.tsx
++++ b/src/sideboard/document-list/document-list.tsx
+@@ -150,6 +150,9 @@ export function DocumentList(props: DocumentListProps) {
+                     handle.change((doc) => module.setTitle?.(doc, name));
+                   }
+                 }
++              })
++              .catch((err) => {
++                console.warn("[sideboard] couldn't rename", doc.url, err);
+               });
+           };
+ 
+@@ -208,6 +211,12 @@ export function DocumentList(props: DocumentListProps) {
+                 const onChange = () => syncTitle();
+                 docHandle.on("change", onChange);
+                 removeListener = () => docHandle.off("change", onChange);
++              })
++              .catch((err) => {
++                // the row unmounted while the doc was loading: its overlay
++                // repo was disposed, and there's nothing left to sync
++                if (cancelled) return;
++                console.warn("[sideboard] couldn't sync the title of", doc.url, err);
+               });
+ 
+             onCleanup(() => {
 diff --git a/src/sideboard/document-list/file-drop.ts b/src/sideboard/document-list/file-drop.ts
 index c961a2d..9cd5793 100644
 --- a/src/sideboard/document-list/file-drop.ts
