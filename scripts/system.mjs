@@ -4,11 +4,13 @@
 //
 //   - PATCHWORK_SYSTEM_DIRECTORY, if it's set: a checkout you look after
 //     yourself (e.g. ../system). It's built if it hasn't been, never fetched.
-//   - otherwise .system/, a clone of PATCHWORK_SYSTEM_REF (default alphaville)
-//     made the first time and left alone after that.
+//   - otherwise .system/, a clone of PATCHWORK_SYSTEM_REF (default alphaville).
+//     Every run fetches the ref's latest commit and rebuilds when it moved, so
+//     a .system kept from an earlier build (a CI cache, an old local one) never
+//     goes stale. Offline, it carries on with the checkout it has.
 //
-//   node scripts/system.mjs          clone and build what's missing
-//   node scripts/system.mjs update   fetch the ref again into .system, rebuild
+//   node scripts/system.mjs          fetch the ref, build if it moved
+//   node scripts/system.mjs update   the same, and rebuild even if it didn't
 //   node scripts/system.mjs path     print the checkout's path
 import {spawnSync} from "node:child_process"
 import {existsSync, readFileSync, writeFileSync} from "node:fs"
@@ -68,11 +70,19 @@ const built = () =>
 		(existsSync(stamp) && JSON.parse(readFileSync(stamp, "utf8")).commit === head()))
 
 export function ensure({update = false} = {}) {
-	if (own && (update || !existsSync(join(directory, ".git")))) fetchRef()
+	if (own) {
+		try {
+			fetchRef()
+		} catch (error) {
+			if (!existsSync(join(directory, ".git"))) throw error
+			console.warn(`system: couldn't fetch patchwork-system@${ref}, keeping .system as it is`)
+		}
+	}
 	if (!existsSync(directory)) {
 		throw new Error(`PATCHWORK_SYSTEM_DIRECTORY ${directory} doesn't exist`)
 	}
 	if (update || !built()) build()
+	console.log(`system: patchwork-system ${own ? `${ref} ` : ""}at ${head().slice(0, 7)}`)
 	return directory
 }
 
