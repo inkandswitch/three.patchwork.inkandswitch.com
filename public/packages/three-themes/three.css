@@ -1,20 +1,15 @@
 /* three's themes.
 
-   light: the default by day. lattice light warmed with a faint orange; see
-   its section at the end.
-
-   alto: the xerox alto's 1-bit paper screen. black ink on white, square
-   corners, hard offset shadows, reverse-video selection and a 50% halftone
-   desk behind everything. the only colour is the green and red diffs need.
+   light: the default by day. lattice light blushed a gentle peach; see its
+   section at the end.
 
    amber: an amber-phosphor vt100. one hue at three brightnesses on warm
    black, everything monospaced, a little bloom on the glyphs and scanlines
    over the glass.
 
-   alto and amber only set the --three-* palette (and their few flourishes);
-   the rest is mapped from it in the block below. light maps its own. */
+   amber only sets the --three-* palette (and its few flourishes); the rest
+   is mapped from it in the block below. light maps its own. */
 
-[theme="three-alto"],
 [theme="three-amber"] {
 	--studio-fill: var(--three-paper);
 	--studio-line: var(--three-ink);
@@ -135,77 +130,6 @@
 	--syntax-content-separator: var(--three-rule);
 }
 
-/* ── alto ─────────────────────────────────────────────────────────────── */
-
-[theme="three-alto"] {
-	color-scheme: light;
-
-	--three-paper: #ffffff;
-	--three-chrome: #ffffff;
-	--three-ink: #000000;
-	--three-bright: #000000;
-	--three-ink-soft: #2b2b2b;
-	--three-ink-faint: #767676;
-	--three-rule: #000000;
-	--three-select: #c6c6c6;
-	--three-active-line: #f2f2f2;
-	--three-accent: #000000;
-	--three-good: #1e6b24;
-	--three-bad: #a31a10;
-	--three-warn: #6e5600;
-
-	/* bravo set its documents in times roman and the alto's menus in
-	   helvetica; gacha, its fixed-width face, is long gone, so courier */
-	--three-family-text: "Times New Roman", Times, "Liberation Serif", serif;
-	--three-family-ui: "Helvetica Neue", Helvetica, Arial, "Liberation Sans",
-		sans-serif;
-	--three-family-code: "Courier Prime", "Courier New", Courier,
-		"Liberation Mono", monospace;
-	--studio-font-size: 15px;
-	--studio-line-height: 1.4;
-	--studio-chrome-letter-spacing: 0;
-
-	/* no blur on a 1-bit screen: shadows are solid black, offset down-right */
-	--studio-shadow-color: #000000;
-	--studio-shadow-sm: 1px 1px 0 #000000;
-	--studio-shadow: 2px 2px 0 #000000;
-	--studio-shadow-md: 3px 3px 0 #000000;
-	--studio-shadow-lg: 4px 4px 0 #000000;
-	--studio-backdrop-blur: 0;
-}
-
-/* 1-bit rules: the ramps' borders and dividers are solid black, not grey.
-   the lighter steps stay as the faintest of tints, for hovers */
-[theme="three-alto"] {
-	--studio-fill-offset-20: #ededed;
-	--studio-fill-offset-30: #000000;
-	--studio-fill-offset-40: #000000;
-	--studio-fill-offset-50: #000000;
-	--studio-chrome-fill-offset-20: #ededed;
-	--studio-chrome-fill-offset-30: #000000;
-	--studio-chrome-fill-offset-40: #000000;
-	--studio-chrome-fill-offset-50: #000000;
-}
-
-/* the sidebar sits on the desk like a window: a black frame down its edge */
-[theme="three-alto"] .frame .sidebar {
-	border-right: 2px solid #000000;
-}
-
-/* the desk: a 50% halftone, wherever no document is open, and wherever the
-   app doesn't cover it */
-[theme="three-alto"] .document-view > .placeholder,
-html[theme="three-alto"] {
-	background-color: #ffffff;
-	background-image: conic-gradient(
-		#000000 25%,
-		#ffffff 0 50%,
-		#000000 0 75%,
-		#ffffff 0
-	);
-	background-size: 2px 2px;
-}
-
 /* ── amber ────────────────────────────────────────────────────────────── */
 
 [theme="three-amber"] {
@@ -267,10 +191,7 @@ html[theme="three-amber"] body::after {
 	);
 }
 
-/* ── both ─────────────────────────────────────────────────────────────── */
-
-/* selection is reverse video, as it was on both machines */
-[theme="three-alto"] ::selection,
+/* selection is reverse video, as it was on the tube */
 [theme="three-amber"] ::selection {
 	background: var(--three-ink);
 	color: var(--three-paper);
@@ -279,42 +200,41 @@ html[theme="three-amber"] body::after {
 
 /* ── light ────────────────────────────────────────────────────────────── */
 
-/* the everyday default: lattice light, warmed. the same plain desktop
-   lightness, but the surfaces carry a faint orange instead of plum and the
-   accent is a burnt orange. the neutrals are lattice's own at the same
-   lightness and chroma, turned to an orange hue; the syntax set is lattice's
-   pastel-inked one, with orange and pink trading places so keywords carry
-   the accent. every ink and syntax colour clears 4.5:1 on the window and the
+/* the everyday default: lattice light, blushed. the same plain desktop
+   lightness, but the surfaces carry a soft peach, the inks lean berry
+   instead of brown, and the accent is a rosy coral. the syntax set is
+   lattice's pastel-inked one, warmed pink, with keywords carrying the
+   accent. every ink and syntax colour clears 4.5:1 on the window and the
    chrome, and the accent clears 4.5:1 as text and under white */
 
 [theme="three-light"] {
 	color-scheme: light;
 
-	--three-window: #fffaf7;
-	--three-chrome: #f7eee7;
-	--three-ink: #372a20;
-	--three-ink-mute: #605247;
-	--three-ink-faint: #6d5e52;
-	--three-accent: #a84a10;
+	--three-window: #fffaf8;
+	--three-chrome: #fcebe6;
+	--three-ink: #45283a;
+	--three-ink-mute: #6e4a5c;
+	--three-ink-faint: #7d5868;
+	--three-accent: #b83a5e;
 	--three-accent-ink: white;
 	--three-cursor: var(--three-accent);
-	--three-selection: #f2c7a6cc;
+	--three-selection: #ffc9bccc;
 
-	--three-red: #bc4044;
-	--three-orange: #b44c00;
-	--three-yellow: #8b6500;
-	--three-green: #007c3d;
-	--three-cyan: #00768a;
-	--three-blue: #286ac7;
-	--three-purple: #8055be;
-	--three-pink: #b2417f;
+	--three-red: #c23a4a;
+	--three-orange: #b2491f;
+	--three-yellow: #8a6000;
+	--three-green: #2b7a4b;
+	--three-cyan: #13748a;
+	--three-blue: #3d64c4;
+	--three-purple: #8a4fb8;
+	--three-pink: #b03b78;
 
 	--studio-fill: var(--three-window);
 	--studio-line: var(--three-ink);
 	--studio-chrome-fill: var(--three-chrome);
 	--studio-chrome-line: var(--three-ink);
-	/* the derived greys lean a little orange */
-	--studio-offset-tint: var(--three-orange);
+	/* the derived greys lean a little rosy */
+	--studio-offset-tint: var(--three-accent);
 	--studio-offset-tint-amount: 6%;
 	/* the gentle inks run from the ink to the faint ink and no fainter, so
 	   each clears 4.5:1 wherever the faint ink does */
@@ -384,11 +304,11 @@ html[theme="three-amber"] body::after {
 	--syntax-angle-bracket: var(--three-ink);
 	--syntax-list: var(--three-ink);
 
-	--syntax-keyword: var(--three-orange);
-	--syntax-control-keyword: var(--three-orange);
-	--syntax-module-keyword: var(--three-orange);
+	--syntax-keyword: var(--three-accent);
+	--syntax-control-keyword: var(--three-accent);
+	--syntax-module-keyword: var(--three-accent);
 
-	--syntax-tag-name: var(--three-orange);
+	--syntax-tag-name: var(--three-accent);
 	--syntax-attribute-name: var(--three-purple);
 
 	--syntax-bool: var(--three-pink);
@@ -400,7 +320,7 @@ html[theme="three-amber"] body::after {
 	--syntax-type-name: var(--three-purple);
 	--syntax-class-name: var(--three-purple);
 	--syntax-namespace: var(--three-purple);
-	--syntax-type-operator: var(--three-orange);
+	--syntax-type-operator: var(--three-accent);
 
 	--syntax-function--variable-name: var(--three-blue);
 	--syntax-function--property-name: var(--three-blue);
@@ -418,7 +338,7 @@ html[theme="three-amber"] body::after {
 	--syntax-emphasis: var(--three-purple);
 	--syntax-style-emphasis: italic;
 
-	--syntax-heading: var(--three-orange);
+	--syntax-heading: var(--three-accent);
 	--syntax-weight-heading: bold;
 
 	--syntax-link: var(--three-blue);
