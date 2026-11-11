@@ -1,5 +1,8 @@
 /* three's themes.
 
+   light: the default by day. lattice light warmed with a faint orange; see
+   its section at the end.
+
    alto: the xerox alto's 1-bit paper screen. black ink on white, square
    corners, hard offset shadows, reverse-video selection and a 50% halftone
    desk behind everything. the only colour is the green and red diffs need.
@@ -8,8 +11,8 @@
    black, everything monospaced, a little bloom on the glyphs and scanlines
    over the glass.
 
-   each theme only sets the --three-* palette (and its few flourishes); the
-   rest is mapped from it here. */
+   alto and amber only set the --three-* palette (and their few flourishes);
+   the rest is mapped from it in the block below. light maps its own. */
 
 [theme="three-alto"],
 [theme="three-amber"] {
@@ -272,4 +275,157 @@ html[theme="three-amber"] body::after {
 	background: var(--three-ink);
 	color: var(--three-paper);
 	text-shadow: none;
+}
+
+/* ── light ────────────────────────────────────────────────────────────── */
+
+/* the everyday default: lattice light, warmed. the same plain desktop
+   lightness, but the surfaces carry a faint orange instead of plum and the
+   accent is a burnt orange. the neutrals are lattice's own at the same
+   lightness and chroma, turned to an orange hue; the syntax set is lattice's
+   pastel-inked one, with orange and pink trading places so keywords carry
+   the accent. every ink and syntax colour clears 4.5:1 on the window and the
+   chrome, and the accent clears 4.5:1 as text and under white */
+
+[theme="three-light"] {
+	color-scheme: light;
+
+	--three-window: #fffaf7;
+	--three-chrome: #f7eee7;
+	--three-ink: #372a20;
+	--three-ink-mute: #605247;
+	--three-ink-faint: #6d5e52;
+	--three-accent: #a84a10;
+	--three-accent-ink: white;
+	--three-cursor: var(--three-accent);
+	--three-selection: #f2c7a6cc;
+
+	--three-red: #bc4044;
+	--three-orange: #b44c00;
+	--three-yellow: #8b6500;
+	--three-green: #007c3d;
+	--three-cyan: #00768a;
+	--three-blue: #286ac7;
+	--three-purple: #8055be;
+	--three-pink: #b2417f;
+
+	--studio-fill: var(--three-window);
+	--studio-line: var(--three-ink);
+	--studio-chrome-fill: var(--three-chrome);
+	--studio-chrome-line: var(--three-ink);
+	/* the derived greys lean a little orange */
+	--studio-offset-tint: var(--three-orange);
+	--studio-offset-tint-amount: 6%;
+	/* the gentle inks run from the ink to the faint ink and no fainter, so
+	   each clears 4.5:1 wherever the faint ink does */
+	--studio-line-offset-10: color-mix(in oklch, var(--three-ink), var(--three-ink-faint) 20%);
+	--studio-line-offset-20: color-mix(in oklch, var(--three-ink), var(--three-ink-faint) 40%);
+	--studio-line-offset-30: color-mix(in oklch, var(--three-ink), var(--three-ink-faint) 60%);
+	--studio-line-offset-40: color-mix(in oklch, var(--three-ink), var(--three-ink-faint) 80%);
+	--studio-line-offset-50: var(--three-ink-faint);
+	--studio-chrome-line-offset-10: var(--studio-line-offset-10);
+	--studio-chrome-line-offset-20: var(--studio-line-offset-20);
+	--studio-chrome-line-offset-30: var(--studio-line-offset-30);
+	--studio-chrome-line-offset-40: var(--studio-line-offset-40);
+	--studio-chrome-line-offset-50: var(--studio-line-offset-50);
+
+	--studio-primary: var(--three-accent);
+	--studio-primary-line: var(--three-accent-ink);
+	--studio-secondary: var(--three-pink);
+	--studio-link: var(--three-blue);
+	--studio-danger: var(--three-red);
+	--studio-warning: var(--three-yellow);
+	--studio-added: var(--three-green);
+	--studio-deleted: var(--three-red);
+	--studio-modified: var(--three-yellow);
+	--studio-selection-fill: var(--three-selection);
+	--studio-selection-line: var(--three-ink);
+
+	--studio-family-sans:
+		-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui,
+		"Helvetica Neue", sans-serif;
+	--studio-family-code:
+		"SF Mono", ui-monospace, Menlo, Monaco, "Cascadia Mono", Consolas, monospace;
+	--studio-family-ui: var(--studio-family-sans);
+	--studio-font-size: 13px;
+	--studio-line-height: 1.45;
+
+	--studio-radius-xs: 3px;
+	--studio-radius-sm: 4px;
+	--studio-radius: 6px;
+	--studio-radius-md: 8px;
+	--studio-radius-lg: 10px;
+
+	--editor-font-size: 14px;
+	--editor-cursor-fill: var(--three-cursor);
+
+	--text-editor-fill: var(--three-window);
+	--text-editor-line: var(--three-ink);
+	--text-editor-cursor-fill: var(--three-cursor);
+	--text-editor-gutter-fill: var(--three-window);
+	--text-editor-gutter-line: var(--three-ink-faint);
+	--text-editor-gutter-border: transparent;
+	--text-editor-active-line-fill: color-mix(in oklch, var(--three-ink) 5%, transparent);
+	--text-editor-active-line-fill--gutter: color-mix(in oklch, var(--three-ink) 8%, transparent);
+	--text-editor-tooltip-fill: var(--three-chrome);
+	--text-editor-tooltip-color: var(--three-ink);
+
+	--syntax-comment: var(--three-ink-faint);
+	--syntax-style-comment: italic;
+	--syntax-doc-comment: var(--three-ink-faint);
+	--syntax-style-doc-comment: italic;
+	--syntax-quote: var(--three-ink-faint);
+
+	--syntax-meta: var(--three-ink-mute);
+	--syntax-invalid: var(--three-red);
+
+	--syntax-operator: var(--three-cyan);
+	--syntax-punctuation: var(--three-ink);
+	--syntax-angle-bracket: var(--three-ink);
+	--syntax-list: var(--three-ink);
+
+	--syntax-keyword: var(--three-orange);
+	--syntax-control-keyword: var(--three-orange);
+	--syntax-module-keyword: var(--three-orange);
+
+	--syntax-tag-name: var(--three-orange);
+	--syntax-attribute-name: var(--three-purple);
+
+	--syntax-bool: var(--three-pink);
+	--syntax-atom: var(--three-pink);
+	--syntax-number: var(--three-pink);
+	--syntax-integer: var(--three-pink);
+	--syntax-float: var(--three-pink);
+
+	--syntax-type-name: var(--three-purple);
+	--syntax-class-name: var(--three-purple);
+	--syntax-namespace: var(--three-purple);
+	--syntax-type-operator: var(--three-orange);
+
+	--syntax-function--variable-name: var(--three-blue);
+	--syntax-function--property-name: var(--three-blue);
+	--syntax-variable-name: var(--three-ink);
+	--syntax-definition--variable-name: var(--three-red);
+
+	--syntax-string: var(--three-green);
+	--syntax-fill-string: transparent;
+	--syntax-special--string: var(--three-green);
+	--syntax-escape: var(--three-cyan);
+	--syntax-regexp: var(--three-cyan);
+
+	--syntax-strong: var(--three-pink);
+	--syntax-weight-strong: bold;
+	--syntax-emphasis: var(--three-purple);
+	--syntax-style-emphasis: italic;
+
+	--syntax-heading: var(--three-orange);
+	--syntax-weight-heading: bold;
+
+	--syntax-link: var(--three-blue);
+	--syntax-style-link: underline;
+
+	--syntax-inserted: var(--three-green);
+	--syntax-deleted: var(--three-red);
+	--syntax-changed: var(--three-yellow);
+	--syntax-content-separator: var(--three-ink-faint);
 }

@@ -14,10 +14,10 @@ export default defineConfig({
 			storagePrefix: "three.patchwork.inkandswitch.com",
 			server: {fs: {allow: [root, core]}},
 			keyhive: process.env.KEYHIVE === "true",
-			themeColor: {light: "#c0c0c0", dark: "#000000"},
+			themeColor: {light: "#f7eee7", dark: "#000000"},
 			html: {
 				attributes: {
-					"data-theme-light": "three-alto",
+					"data-theme-light": "three-light",
 					"data-theme-dark": "three-amber",
 					// seed only three's own examples (public/init.js), not the tools
 					// bundle's, whose tools three doesn't load

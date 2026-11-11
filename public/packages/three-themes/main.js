@@ -1,5 +1,7 @@
-// three's two themes: a xerox alto for the day, an amber vt100 for the night
+// three's themes: a warmed lattice light for the day, an amber vt100 for the
+// night, and a xerox alto for a 1-bit day
 const themes = [
+	{id: "three-light", name: "Light", colorScheme: "light"},
 	{id: "three-alto", name: "Alto", colorScheme: "light"},
 	{id: "three-amber", name: "Amber", colorScheme: "dark"},
 ]
