@@ -13,6 +13,6 @@ minimumReleaseAgeExclude:
 # the automerge the host gives them
 overrides:
   "@automerge/automerge": 3.5.0
-  "@automerge/automerge-repo": 3.0.0-alpha.1
-  "@automerge/automerge-repo-subduction": 3.0.0-alpha.1
+  "@automerge/automerge-repo": 3.0.0-alpha.2
+  "@automerge/automerge-repo-subduction": 3.0.0-alpha.2
   "@automerge/subduction": 0.27.0
