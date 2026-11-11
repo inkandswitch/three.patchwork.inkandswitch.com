@@ -8,7 +8,8 @@
 //                                         vendor/<name>.patch
 //   node scripts/vendor.mjs check         check every patch applies cleanly
 import {spawnSync} from "node:child_process"
-import {existsSync, mkdirSync, rmSync, writeFileSync} from "node:fs"
+import {existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs"
+import {tmpdir} from "node:os"
 import {dirname, join, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
 
@@ -26,6 +27,7 @@ const packages = {
 	"codemirror-markdown": base,
 	sideboard: base,
 	"sync-indicator": base,
+	"comments-view": base,
 }
 
 // a commit needs someone to have made it, and a build machine has no one
@@ -85,12 +87,18 @@ if (command === "fetch") {
 	writeFileSync(patchFile(name), changes(sourceDir(name)))
 	console.log(`vendor: wrote vendor/${name}.patch`)
 } else if (command === "check") {
+	// each patch against a clean copy of the commit it was made on, so the
+	// edits in progress in .vendor/<name> don't count
 	for (const name of Object.keys(packages)) {
 		const dir = sourceDir(name)
 		if (!existsSync(join(dir, ".git"))) await fetchSource(name, packages[name], dir)
-		run("git", ["stash", "--quiet", "--include-untracked"], dir)
-		run("git", ["apply", "--check", patchFile(name)], dir)
-		run("git", ["stash", "pop", "--quiet"], dir)
+		const clean = mkdtempSync(join(tmpdir(), `three-vendor-${name}-`))
+		try {
+			run("sh", ["-c", `git -C "${dir}" archive HEAD | tar -x -C "${clean}"`], root)
+			run("git", ["apply", "--check", patchFile(name)], clean)
+		} finally {
+			rmSync(clean, {recursive: true, force: true})
+		}
 		console.log(`vendor: ${name}.patch applies`)
 	}
 } else {

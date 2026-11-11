@@ -1,0 +1,74 @@
+diff --git a/patches/cute.txt@0.0.7.patch b/patches/cute.txt@0.0.7.patch
+new file mode 100644
+index 0000000..5294b2b
+--- /dev/null
++++ b/patches/cute.txt@0.0.7.patch
+@@ -0,0 +1,26 @@
++diff --git a/dist/preview.js b/dist/preview.js
++index ae2dd1d9bb0de2125b31607f1601a10634699dbb..f1fe71c6e1395640c48fdb844420e4db34da70ba 100644
++--- a/dist/preview.js
+++++ b/dist/preview.js
++@@ -487,7 +487,7 @@ async function createFileToken(schema, repo, file) {
++     const mimeType = file.type || "application/octet-stream";
++     const extension = extensionForFile(file, mimeType);
++     const name = file.name || `file.${extension}`;
++-    const fileHandle = await repo.create2({
+++    const fileHandle = await repo.create({
++         content: buffer,
++         extension,
++         mimeType,
++diff --git a/src/preview.ts b/src/preview.ts
++index 111c24d567b1a5d7671d9b854d18845c1ce9f587..12f352aeb613fca9ee6702c108b2ce7174964785 100644
++--- a/src/preview.ts
+++++ b/src/preview.ts
++@@ -472,7 +472,7 @@ async function createFileToken(schema, repo, file) {
++   const mimeType = file.type || "application/octet-stream"
++   const extension = extensionForFile(file, mimeType)
++   const name = file.name || `file.${extension}`
++-  const fileHandle = await repo.create2({
+++  const fileHandle = await repo.create({
++     content: buffer,
++     extension,
++     mimeType,
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 05e66f8..ddf67ed 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -4,6 +4,9 @@ settings:
+   autoInstallPeers: true
+   excludeLinksFromLockfile: false
+ 
++patchedDependencies:
++  cute.txt@0.0.7: ea3229739e06465f7a890ba0474418101882330ef5a81d55476867d5162022fd
++
+ importers:
+ 
+   .:
+@@ -31,7 +34,7 @@ importers:
+         version: 0.2.8(@automerge/automerge-repo@2.6.0-subduction.26(supports-color@7.2.0))(solid-automerge@2.1.1(@automerge/automerge-repo@2.6.0-subduction.26(supports-color@7.2.0))(solid-js@1.9.13)(supports-color@7.2.0))(solid-js@1.9.13)
+       cute.txt:
+         specifier: ^0.0.7
+-        version: 0.0.7(@automerge/automerge@3.3.0-fragments.1)(@codemirror/state@6.7.5)(@codemirror/view@6.43.12)(solid-js@1.9.13)
++        version: 0.0.7(patch_hash=ea3229739e06465f7a890ba0474418101882330ef5a81d55476867d5162022fd)(@automerge/automerge@3.3.0-fragments.1)(@codemirror/state@6.7.5)(@codemirror/view@6.43.12)(solid-js@1.9.13)
+       solid-automerge:
+         specifier: ^2.1.1
+         version: 2.1.1(@automerge/automerge-repo@2.6.0-subduction.26(supports-color@7.2.0))(solid-js@1.9.13)(supports-color@7.2.0)
+@@ -2494,7 +2497,7 @@ snapshots:
+ 
+   csstype@3.2.3: {}
+ 
+-  cute.txt@0.0.7(@automerge/automerge@3.3.0-fragments.1)(@codemirror/state@6.7.5)(@codemirror/view@6.43.12)(solid-js@1.9.13):
++  cute.txt@0.0.7(patch_hash=ea3229739e06465f7a890ba0474418101882330ef5a81d55476867d5162022fd)(@automerge/automerge@3.3.0-fragments.1)(@codemirror/state@6.7.5)(@codemirror/view@6.43.12)(solid-js@1.9.13):
+     optionalDependencies:
+       '@automerge/automerge': 3.3.0-fragments.1
+       '@codemirror/state': 6.7.5
+diff --git a/pnpm-workspace.yaml b/pnpm-workspace.yaml
+index 0753535..784a0e6 100644
+--- a/pnpm-workspace.yaml
++++ b/pnpm-workspace.yaml
+@@ -7,3 +7,5 @@ allowBuilds:
+   cbor-extract: true
+   core-js: true
+   esbuild: true
++patchedDependencies:
++  cute.txt@0.0.7: patches/cute.txt@0.0.7.patch

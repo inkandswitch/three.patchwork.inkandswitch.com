@@ -1,3 +1,15 @@
+diff --git a/src/sideboard/dnd/drop.test.ts b/src/sideboard/dnd/drop.test.ts
+index eee9b5d..78a04a0 100644
+--- a/src/sideboard/dnd/drop.test.ts
++++ b/src/sideboard/dnd/drop.test.ts
+@@ -32,7 +32,6 @@ function handleFor<T>(initial: T): DocHandle<T> {
+ }
+ const repo = {
+   create: <T>(initial: T) => handleFor(initial),
+-  create2: async <T>(initial: T) => handleFor(initial),
+   find: async (url: AutomergeUrl) => {
+     const handle = docs.get(url);
+     if (!handle) throw new Error("no such doc");
 diff --git a/src/sideboard/document-list/file-drop.ts b/src/sideboard/document-list/file-drop.ts
 index c961a2d..9cd5793 100644
 --- a/src/sideboard/document-list/file-drop.ts
