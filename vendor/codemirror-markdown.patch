@@ -1,0 +1,37 @@
+diff --git a/example.js b/example.js
+index 1685335..7141f86 100644
+--- a/example.js
++++ b/example.js
+@@ -29,7 +29,7 @@ Patchwork really comes into its own once you start bringing your own tools into
+ `;
+ 
+ export default async function example(repo) {
+-  const handle = await repo.create2({
++  const handle = await repo.create({
+     "@patchwork": {
+       type: "essay",
+       suggestedImportUrl: new URL("./dist/main.js", import.meta.url).href,
+diff --git a/src/extensions/embed.ts b/src/extensions/embed.ts
+index d28d3cd..9766930 100644
+--- a/src/extensions/embed.ts
++++ b/src/extensions/embed.ts
+@@ -224,13 +224,12 @@ async function fileDropRefs(files: FileList): Promise<DocRef[]> {
+         : new Uint8Array(await file.arrayBuffer());
+       const parts = file.name.split(".");
+       const extension = parts.length > 1 ? parts.pop()! : "";
+-      const handle = repo.create();
+-      handle.change((d: any) => {
+-        d["@patchwork"] = { type: "file" };
+-        d.content = content;
+-        d.mimeType = mimeType;
+-        d.extension = extension;
+-        d.name = file.name;
++      const handle = await repo.create({
++        "@patchwork": { type: "file" },
++        content,
++        mimeType,
++        extension,
++        name: file.name,
+       });
+       const { documentId } = parseAutomergeUrl(handle.url as AutomergeUrl);
+       if (isValidDocumentId(documentId)) {

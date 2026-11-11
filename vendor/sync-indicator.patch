@@ -1,0 +1,425 @@
+diff --git a/src/SyncIndicator.tsx b/src/SyncIndicator.tsx
+index 7dde476..efffda3 100644
+--- a/src/SyncIndicator.tsx
++++ b/src/SyncIndicator.tsx
+@@ -1,8 +1,7 @@
+ import Debug from "debug";
+-import * as A from "@automerge/automerge/slim";
+ import {
+   type DocHandle,
+-  type StorageId,
++  type DocHandleRemoteHeadsPayload,
+   type UrlHeads,
+   type PeerId,
+ } from "@automerge/automerge-repo/slim";
+@@ -13,11 +12,8 @@ import {
+   createEffect,
+   on,
+   onCleanup,
+-  untrack,
+   Show,
+-  For,
+ } from "solid-js";
+-import { createStore, reconcile } from "solid-js/store";
+ import { render } from "solid-js/web";
+ import type { ToolImplementation } from "@inkandswitch/patchwork-plugins";
+ import { getRelativeTimeString } from "./lib/relative-time";
+@@ -30,36 +26,40 @@ const log = Debug("patchwork:sync-indicator");
+ 
+ export { RepoContext };
+ 
+-interface PeerSyncInfo {
+-  id: string;
+-  name: string;
+-  storageId: StorageId | undefined;
+-  heads: UrlHeads | undefined;
+-  lastSyncTimestamp: number | undefined;
+-  inSync: boolean;
+-}
++// What automerge-repo 3's Repo doesn't say: which peers are the sync server,
++// and whether we're connected to it. A host can add these (automerge-repo
++// 2.6's subduction builds had them on the Repo). Without them, every peer a
++// tab hears `remote-heads` from counts as the server, which on patchwork's
++// automerge-repo 3 it is: the automerge worker holds the origin's only
++// socket, and a tab's Repo hears only from the server(s) beyond it.
++// Connection then follows whether the browser is online.
++type SubductionHost = {
++  isSubductionConnected?(): boolean;
++  connectedSubductionPeerIds?(): Promise<string[]>;
++  on?(event: "subduction-connection", fn: (e: { connected: boolean }) => void): unknown;
++  off?(event: "subduction-connection", fn: (e: { connected: boolean }) => void): unknown;
++};
+ 
+-function peerName(peerId: PeerId): string {
+-  if (
+-    peerId.startsWith("shared-worker") ||
+-    peerId.startsWith("automerge-worker")
+-  )
+-    return "Shared Worker";
+-  if (peerId.startsWith("service-worker")) return "Service Worker";
+-  if (peerId.startsWith("storage-server")) return "Sync Server";
+-  return String(peerId);
+-}
++// server peers heard from in this tab, so a later mount can seed from
++// getSyncInfo when the host can't list them
++const seenServerPeers = new Set<PeerId>();
+ 
+ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+-  const repo = useRepo();
++  const host = useRepo() as unknown as SubductionHost;
++  const hostKnowsConnection = typeof host.isSubductionConnected === "function";
++  const hostListsPeers = typeof host.connectedSubductionPeerIds === "function";
++
+   const [isPopoverOpen, setIsPopoverOpen] = createSignal(false);
+   const [now, setNow] = createSignal(Date.now());
+   const [ownHeads, setOwnHeads] = createSignal<UrlHeads | undefined>();
+ 
+-  // The tab's repo talks to the sync server itself over a Subduction websocket,
+-  // so connection state and server heads come straight off the repo.
+-  const [connected, setConnected] = createSignal(repo.isSubductionConnected());
+-  const [serverPeerIds, setServerPeerIds] = createSignal<string[]>([]);
++  const isConnected = () =>
++    hostKnowsConnection ? host.isSubductionConnected!() : navigator.onLine;
++  const [connected, setConnected] = createSignal(isConnected());
++  // null: the host can't say, so any peer's heads count
++  const [serverPeerIds, setServerPeerIds] = createSignal<PeerId[] | null>(
++    hostListsPeers ? [] : null
++  );
+ 
+   const [syncServerHeads, setSyncServerHeads] = createSignal<
+     UrlHeads | undefined
+@@ -67,12 +67,6 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+   const [syncServerTimestamp, setSyncServerTimestamp] = createSignal<
+     number | undefined
+   >();
+-  const [syncServerStorageId, setSyncServerStorageId] = createSignal<
+-    StorageId | undefined
+-  >();
+-
+-  // classic automerge-sync peers (other tabs, workers)
+-  const [peers, setPeers] = createStore<PeerSyncInfo[]>([]);
+ 
+   // The server advertises Subduction *sedimentree* heads, NOT the Automerge
+   // frontier, so they can't be compared to ours with A.equals. Ask the handle
+@@ -80,7 +74,7 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+   const containsServerHeads = (heads: UrlHeads | undefined): boolean => {
+     if (!heads || heads.length === 0) return false;
+     try {
+-      return props.handle.containsHeads(heads);
++      return props.handle.hasHeads(heads);
+     } catch {
+       return false;
+     }
+@@ -106,7 +100,7 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+     return heads.filter((h) => {
+       if (frontier.has(h)) return true;
+       try {
+-        return !props.handle.containsHeads([h] as UrlHeads);
++        return !props.handle.hasHeads([h] as UrlHeads);
+       } catch {
+         return true;
+       }
+@@ -116,16 +110,16 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+   createEffect(
+     on(isPopoverOpen, (open) => {
+       if (!open) return;
+-      untrack(refreshPeers);
+       const interval = setInterval(() => setNow(Date.now()), 1000);
+       onCleanup(() => clearInterval(interval));
+     })
+   );
+ 
+   const refreshServerPeerIds = () => {
+-    repo
+-      .connectedSubductionPeerIds()
+-      .then(setServerPeerIds)
++    if (!hostListsPeers) return;
++    host
++      .connectedSubductionPeerIds!()
++      .then((ids) => setServerPeerIds(ids as PeerId[]))
+       .catch((err) => log("connectedSubductionPeerIds failed", err));
+   };
+ 
+@@ -133,20 +127,35 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+     const onConnection = ({ connected }: { connected: boolean }) => {
+       setConnected(connected);
+       if (connected) refreshServerPeerIds();
+-      else setServerPeerIds([]);
++      else if (hostListsPeers) setServerPeerIds([]);
+     };
+-    repo.on("subduction-connection", onConnection);
+-    setConnected(repo.isSubductionConnected());
++    const onOnline = () => onConnection({ connected: navigator.onLine });
++    if (hostKnowsConnection) host.on?.("subduction-connection", onConnection);
++    else {
++      window.addEventListener("online", onOnline);
++      window.addEventListener("offline", onOnline);
++    }
++    setConnected(isConnected());
+     refreshServerPeerIds();
+-    onCleanup(() => repo.off("subduction-connection", onConnection));
++    onCleanup(() => {
++      if (hostKnowsConnection) host.off?.("subduction-connection", onConnection);
++      else {
++        window.removeEventListener("online", onOnline);
++        window.removeEventListener("offline", onOnline);
++      }
++    });
+   });
+ 
+-  function applySyncServerUpdate(
+-    storageId: StorageId,
+-    heads: UrlHeads,
+-    timestamp: number
+-  ) {
+-    setSyncServerStorageId(storageId);
++  const isServerPeer = (peerId: PeerId) => {
++    const ids = serverPeerIds();
++    return ids === null || ids.includes(peerId);
++  };
++
++  function applySyncServerUpdate(heads: UrlHeads, timestamp: number) {
++    // a peer that reports later than we've already heard about is news;
++    // one that reports earlier (a seed from getSyncInfo) isn't
++    const last = syncServerTimestamp();
++    if (last !== undefined && timestamp < last) return;
+     setSyncServerHeads(heads);
+     setSyncServerTimestamp(timestamp);
+   }
+@@ -160,120 +169,32 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+       if (h.doc()) setOwnHeads(h.heads());
+     };
+ 
+-    const updatePeerRow = (idx: number, heads: UrlHeads, timestamp: number) => {
+-      const currentHeads = ownHeads();
+-      setPeers(idx, {
+-        heads,
+-        lastSyncTimestamp: timestamp,
+-        inSync: currentHeads ? A.equals(currentHeads, heads) : false,
+-      });
+-    };
+-
+-    const onRemoteHeads = ({
+-      storageId,
+-      heads,
+-      timestamp,
+-    }: {
+-      storageId: StorageId;
+-      heads: UrlHeads;
+-      timestamp: number;
+-    }) => {
+-      log("remote-heads", { storageId, heads, timestamp });
+-      const idx = peers.findIndex((p) => p.storageId === storageId);
+-      if (idx >= 0) updatePeerRow(idx, heads, timestamp);
+-    };
+-
+-    const onSubductionHeads = (payload: {
+-      documentId: string;
+-      storageId: StorageId;
+-      heads: UrlHeads;
+-      timestamp: number;
+-    }) => {
+-      if (payload.documentId !== h.documentId) return;
+-      log("subduction-remote-heads", payload);
+-      const ids = serverPeerIds();
+-      if (ids.length && !ids.includes(payload.storageId)) return;
+-      applySyncServerUpdate(payload.storageId, payload.heads, payload.timestamp);
++    // the server's heads for this doc, the way patchwork's bench reads them
++    const onRemoteHeads = ({ peerId, heads, timestamp }: DocHandleRemoteHeadsPayload) => {
++      if (!isServerPeer(peerId)) return;
++      log("remote-heads", { peerId, heads, timestamp });
++      seenServerPeers.add(peerId);
++      applySyncServerUpdate(heads, timestamp);
+     };
+ 
+     h.on("change", onChange);
+     h.on("remote-heads", onRemoteHeads);
+-    repo.on("subduction-remote-heads", onSubductionHeads);
+-
+-    untrack(refreshPeers);
+ 
+     onCleanup(() => {
+       h.off("change", onChange);
+       h.off("remote-heads", onRemoteHeads);
+-      repo.off("subduction-remote-heads", onSubductionHeads);
+     });
+   });
+ 
+-  // Whatever the repo already knows about the server's heads for this doc
+-  // (persisted sync info survives reload).
++  // Whatever the repo already knows about the server's heads for this doc,
++  // to start from on mount.
+   createEffect(() => {
+     const h = props.handle;
+-    for (const sid of serverPeerIds()) {
+-      const info = h.getSyncInfo(sid as StorageId);
++    const ids = serverPeerIds() ?? [...seenServerPeers];
++    for (const peerId of ids) {
++      const info = h.getSyncInfo(peerId);
+       if (info?.lastHeads) {
+-        applySyncServerUpdate(
+-          sid as StorageId,
+-          info.lastHeads,
+-          info.lastSyncTimestamp
+-        );
+-      }
+-    }
+-  });
+-
+-  function refreshPeers() {
+-    const h = props.handle;
+-    const currentHeads = h.heads();
+-    const peerList: PeerSyncInfo[] = repo.peers.map((peerId) => {
+-      const storageId = repo.getStorageIdOfPeer(peerId);
+-      const syncInfo = storageId ? h.getSyncInfo(storageId) : undefined;
+-      return {
+-        id: peerId,
+-        name: peerName(peerId),
+-        storageId,
+-        heads: syncInfo?.lastHeads,
+-        lastSyncTimestamp: syncInfo?.lastSyncTimestamp,
+-        inSync:
+-          syncInfo?.lastHeads && currentHeads
+-            ? A.equals(currentHeads, syncInfo.lastHeads)
+-            : false,
+-      };
+-    });
+-
+-    peerList.push({
+-      id: "sync-server",
+-      name: "Sync Server",
+-      storageId: syncServerStorageId(),
+-      heads: syncServerHeads(),
+-      lastSyncTimestamp: syncServerTimestamp(),
+-      inSync: containsServerHeads(syncServerHeads()),
+-    });
+-
+-    const peerOrder = (p: PeerSyncInfo) =>
+-      p.name === "Shared Worker" ? 0 : p.name === "Sync Server" ? 2 : 1;
+-    peerList.sort((a, b) => peerOrder(a) - peerOrder(b));
+-
+-    log("peers", peerList);
+-    setPeers(reconcile(peerList));
+-  }
+-
+-  createEffect(() => {
+-    const currentHeads = ownHeads();
+-    if (!currentHeads) return;
+-    for (let i = 0; i < peers.length; i++) {
+-      const peer = peers[i];
+-      const inSync =
+-        peer.name === "Sync Server"
+-          ? containsServerHeads(peer.heads)
+-          : peer.heads
+-            ? A.equals(currentHeads, peer.heads)
+-            : false;
+-      if (peer.inSync !== inSync) {
+-        setPeers(i, "inSync", inSync);
++        applySyncServerUpdate(info.lastHeads, info.lastSyncTimestamp);
+       }
+     }
+   });
+@@ -287,24 +208,14 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+ 
+   const syncServerKnown = () => !!syncServerHeads();
+ 
+-  const peerStatusLabel = (peer: PeerSyncInfo) => {
+-    const inSync = peer.name === "Sync Server" ? syncedToServer() : peer.inSync;
+-    return inSync ? "synced" : peer.heads ? "behind" : "unknown";
+-  };
++  const serverStatusLabel = () =>
++    syncedToServer() ? "synced" : syncServerHeads() ? "behind" : "unknown";
+ 
+   const serverRowHeads = () => {
+     ownHeads();
+     return trimSeenServerHeads(syncServerHeads());
+   };
+ 
+-  const serverRowTimestamp = () => syncServerTimestamp();
+-
+-  const displayHeads = (peer: PeerSyncInfo) =>
+-    peer.name === "Sync Server" ? serverRowHeads() : peer.heads;
+-
+-  const displayTimestamp = (peer: PeerSyncInfo) =>
+-    peer.name === "Sync Server" ? serverRowTimestamp() : peer.lastSyncTimestamp;
+-
+   const iconState = (): "synced" | "syncing" | "error" | "unknown" => {
+     if (!connected()) return "error";
+     if (!syncServerKnown()) return "unknown";
+@@ -321,21 +232,12 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+     const data = {
+       ownHeads: ownHeads(),
+       connected: connected(),
+-      serverPeerIds: serverPeerIds(),
++      serverPeerIds: serverPeerIds() ?? [...seenServerPeers],
+       syncServer: {
+-        storageId: syncServerStorageId(),
+         heads: syncServerHeads(),
+         lastSyncTimestamp: syncServerTimestamp(),
+         inSync: syncedToServer(),
+       },
+-      peers: peers.map((p) => ({
+-        name: p.name,
+-        id: p.id,
+-        storageId: p.storageId,
+-        heads: p.heads,
+-        lastSyncTimestamp: p.lastSyncTimestamp,
+-        inSync: p.inSync,
+-      })),
+     };
+     try {
+       await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+@@ -384,34 +286,27 @@ export function SyncIndicator(props: { handle: DocHandle<unknown> }) {
+               </div>
+             </div>
+ 
+-            <For each={peers}>
+-              {(peer) => (
+-                <div
+-                  class="sync-peer sync-peer-clickable"
+-                  onClick={() => copyHeads(displayHeads(peer))}
+-                >
+-                  <div class="sync-peer-header">
+-                    <span class="sync-peer-name">{peer.name}</span>
+-                    <span class="sync-peer-status">
+-                      {peerStatusLabel(peer)}
+-                    </span>
++            <div
++              class="sync-peer sync-peer-clickable"
++              onClick={() => copyHeads(serverRowHeads())}
++            >
++              <div class="sync-peer-header">
++                <span class="sync-peer-name">Sync Server</span>
++                <span class="sync-peer-status">{serverStatusLabel()}</span>
++              </div>
++              <Show when={serverRowHeads()}>
++                {(heads) => (
++                  <div class="sync-peer-detail">
++                    heads: {JSON.stringify(heads().map((h) => h.slice(0, 6)))}
+                   </div>
+-                  <Show when={displayHeads(peer)}>
+-                    {(heads) => (
+-                      <div class="sync-peer-detail">
+-                        heads:{" "}
+-                        {JSON.stringify(heads().map((h) => h.slice(0, 6)))}
+-                      </div>
+-                    )}
+-                  </Show>
+-                  <Show when={displayTimestamp(peer)}>
+-                    <div class="sync-peer-detail">
+-                      {relativeTime(displayTimestamp(peer))}
+-                    </div>
+-                  </Show>
++                )}
++              </Show>
++              <Show when={syncServerTimestamp()}>
++                <div class="sync-peer-detail">
++                  {relativeTime(syncServerTimestamp())}
+                 </div>
+-              )}
+-            </For>
++              </Show>
++            </div>
+           </div>
+ 
+           <div class="sync-footer">

@@ -1,0 +1,44 @@
+diff --git a/src/picker/AccountPicker.tsx b/src/picker/AccountPicker.tsx
+index 8d0c421..0990dc3 100644
+--- a/src/picker/AccountPicker.tsx
++++ b/src/picker/AccountPicker.tsx
+@@ -197,18 +197,18 @@ export const AccountPicker = (props: PatchworkToolProps<any>) => {
+     if (!compressed) return;
+ 
+     const repo = props.element.repo as Repo;
+-    const imageHandle = await repo.create2<{
++    const imageHandle = await repo.create<{
+       content: Uint8Array;
+       mimeType: string;
+     }>();
+-    imageHandle.change((doc) => {
++    await imageHandle.change((doc) => {
+       doc.content = compressed.content;
+       doc.mimeType = compressed.mimeType;
+       (doc as any).name = pending.file.name;
+       (doc as any).extension = "webp";
+     });
+ 
+-    selfHandle()?.change((contact: ContactDoc) => {
++    await selfHandle()?.change((contact: ContactDoc) => {
+       if (contact.type === "registered") {
+         contact.avatarUrl = imageHandle.url;
+       }
+@@ -221,7 +221,7 @@ export const AccountPicker = (props: PatchworkToolProps<any>) => {
+     let targetContactHandle = selfHandle();
+     if (!currentAccount.contactUrl) {
+       const repo = props.element.repo as Repo;
+-      targetContactHandle = await repo.create2<
++      targetContactHandle = await repo.create<
+         ContactDoc & HasPatchworkMetadata
+       >({
+         ["@patchwork"]: { type: "patchwork:contact" },
+@@ -229,7 +229,7 @@ export const AccountPicker = (props: PatchworkToolProps<any>) => {
+         color: getRandomUserColor(),
+       });
+       const targetContactUrl = targetContactHandle.url;
+-      props.handle.change((account: TinyPatchworkLayoutDoc) => {
++      await props.handle.change((account: TinyPatchworkLayoutDoc) => {
+         account.contactUrl = targetContactUrl;
+       });
+     }

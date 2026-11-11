@@ -1,0 +1,66 @@
+diff --git a/src/FocusProvider.ts b/src/FocusProvider.ts
+index b942477..aa31160 100644
+--- a/src/FocusProvider.ts
++++ b/src/FocusProvider.ts
+@@ -17,24 +17,39 @@ export type FocusDoc = {
+ };
+ 
+ export const FocusProvider = (element: PatchworkViewElement) => {
+-  const handle = element.repo.create<FocusDoc>({
++  // automerge-repo 3 creates documents asynchronously, so subscribers are
++  // answered once the doc exists
++  let disposed = false;
++  const created = element.repo.create<FocusDoc>({
+     selection: {},
+     highlight: {},
+   });
++  created.catch((err) => {
++    console.error("[providers] couldn't create the focus doc:", err);
++  });
+ 
+   // Consumers recover the live handle from the global repo via this url, so
+   // they can both read (projection) and write (`.change`) the same doc.
+   const onSubscribe = (event: SubscribeEvent) => {
+     if (event.detail.selector.type !== SELECTOR) return;
+     accept<AutomergeUrl>(event, (respond) => {
+-      respond(handle.url);
++      created.then(
++        (handle) => {
++          if (!disposed) respond(handle.url);
++        },
++        () => {}
++      );
+     });
+   };
+ 
+   element.addEventListener("patchwork:subscribe", onSubscribe);
+ 
+   return () => {
++    disposed = true;
+     element.removeEventListener("patchwork:subscribe", onSubscribe);
+-    handle.delete();
++    created.then(
++      (handle) => handle.delete(),
++      () => {}
++    );
+   };
+ };
+diff --git a/src/ToolStorageProvider.ts b/src/ToolStorageProvider.ts
+index 74d0066..dcdbcec 100644
+--- a/src/ToolStorageProvider.ts
++++ b/src/ToolStorageProvider.ts
+@@ -110,11 +110,11 @@ function ensureToolStorageUrl(
+   if (inflight) return inflight;
+ 
+   const promise = repo
+-    .create2<Record<string, unknown>>({
++    .create<Record<string, unknown>>({
+       "@patchwork": { type: "patchwork:tool-storage" },
+     })
+-    .then((handle) => {
+-      accountDocHandle.change((doc) => {
++    .then(async (handle) => {
++      await accountDocHandle.change((doc) => {
+         if (!doc.toolStorage) doc.toolStorage = {};
+         // Another caller may have won the race while ours was in flight.
+         if (!doc.toolStorage[toolId]) doc.toolStorage[toolId] = handle.url;

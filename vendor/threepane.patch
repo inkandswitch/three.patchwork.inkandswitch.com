@@ -1,0 +1,15 @@
+diff --git a/src/account/gaiosExamples.ts b/src/account/gaiosExamples.ts
+index 813cc62..ca2c8d8 100644
+--- a/src/account/gaiosExamples.ts
++++ b/src/account/gaiosExamples.ts
+@@ -12,8 +12,8 @@ export async function seedGaiosExamples(
+   folder: DocHandle<FolderDoc>
+ ) {
+   for (const example of EXAMPLES) {
+-    const handle = await repo.create2(example.doc);
+-    folder.change((doc) => {
++    const handle = await repo.create(example.doc);
++    await folder.change((doc) => {
+       doc.docs.push({
+         name: example.name,
+         type: example.doc["@patchwork"].type,
