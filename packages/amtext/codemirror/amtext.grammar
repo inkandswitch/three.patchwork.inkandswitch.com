@@ -1,0 +1,40 @@
+@top Document { Map }
+
+@skip { space | LineComment | "," }
+
+Map { "{" Entry* "}" }
+
+Entry { PropertyName ("=" | ":")? value }
+
+PropertyName { Identifier | MetaName | String | kw<"true"> | kw<"false"> | kw<"null"> }
+
+List { "[" value* "]" }
+
+Call { Callee ArgList }
+
+Callee { Identifier }
+
+ArgList { "(" value* ")" }
+
+value { Map | List | String | Fence | Number | Boolean | Null | Call }
+
+Boolean { kw<"true"> | kw<"false"> }
+
+Null { kw<"null"> }
+
+kw<term> { @specialize[@name={term}]<Identifier, term> }
+
+@external tokens fence from "./tokens.js" { Fence }
+
+@tokens {
+  space { $[ \t\n\r]+ }
+  LineComment { "//" ![\n]* }
+  identChar { $[A-Za-z0-9_@$\-] }
+  Identifier { $[A-Za-z_$] identChar* }
+  MetaName { "@" identChar+ }
+  Number { "-"? ("0" | $[1-9] $[0-9]*) ("." $[0-9]+)? ($[eE] $[+\-]? $[0-9]+)? }
+  String { '"' (!["\\\n] | "\\" _)* '"' }
+  "{" "}" "[" "]" "(" ")" "=" ":"
+}
+
+@detectDelim

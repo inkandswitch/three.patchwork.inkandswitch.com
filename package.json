@@ -1,0 +1,22 @@
+{
+	"name": "three.patchwork.inkandswitch.com",
+	"type": "module",
+	"private": true,
+	"dependencies": {
+		"@inkandswitch/patchwork-pkg-base": "^0.0.114"
+	},
+	"devDependencies": {
+		"vite": "^7.3.6"
+	},
+	"scripts": {
+		"dev": "node scripts/dev.mjs",
+		"system": "node scripts/system.mjs",
+		"system:update": "node scripts/system.mjs update",
+		"build": "node scripts/system.mjs && pnpm --filter amtext build:patchwork && pnpm --filter @three/drafts build && vite build",
+		"preview": "vite preview",
+		"serve": "vite preview",
+		"sync": "pnpm build && pushwork sync",
+		"test": "pnpm --filter @three/drafts test"
+	},
+	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065"
+}

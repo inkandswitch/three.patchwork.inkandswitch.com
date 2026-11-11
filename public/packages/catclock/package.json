@@ -1,0 +1,12 @@
+{
+	"name": "@knit/catclock",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"main": "./catclock.js",
+	"exports": {
+		".": {
+			"import": "./catclock.js"
+		}
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"noEmit": true,
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"skipLibCheck": true,
+		"isolatedModules": true,
+		"paths": {
+			"@inkandswitch/patchwork": ["./.system/core/patchwork/dist/index.d.ts"],
+			"@inkandswitch/patchwork/client": ["./.system/core/patchwork/dist/client.d.ts"]
+		}
+	},
+	"include": ["src"]
+}

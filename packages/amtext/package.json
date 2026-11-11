@@ -1,0 +1,61 @@
+{
+  "name": "amtext",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Plain-text format for Automerge docs, .patchworkfolder archives, and a CodeMirror language",
+  "exports": {
+    ".": "./amtext.js",
+    "./patchworkfolder": "./patchworkfolder.js",
+    "./codemirror": "./codemirror/index.js"
+  },
+  "files": [
+    "amtext.js",
+    "patchworkfolder.js",
+    "patchworkfolder.console.js",
+    "codemirror/*.js",
+    "codemirror/amtext.grammar"
+  ],
+  "scripts": {
+    "build:grammar": "lezer-generator codemirror/amtext.grammar -o codemirror/parser.js",
+    "build:console": "esbuild console-entry.js --bundle --format=iife --target=es2022 --outfile=patchworkfolder.console.js",
+    "build": "pnpm build:grammar && pnpm build:console && pnpm build:patchwork",
+    "build:patchwork": "node build-patchwork.mjs",
+    "test": "node test.mjs && node cm-test.mjs"
+  },
+  "peerDependencies": {
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/autocomplete": "^6.20.4",
+    "@lezer/highlight": "^1.2.5",
+    "@lezer/lr": "^1.4.11"
+  },
+  "peerDependenciesMeta": {
+    "@codemirror/language": {
+      "optional": true
+    },
+    "@codemirror/lint": {
+      "optional": true
+    },
+    "@codemirror/autocomplete": {
+      "optional": true
+    },
+    "@lezer/highlight": {
+      "optional": true
+    },
+    "@lezer/lr": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@automerge/automerge": "^3.5.0",
+    "esbuild": "^0.28.2",
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/generator": "^1.8.1",
+    "@lezer/highlight": "^1.2.5",
+    "@lezer/lr": "^1.4.11"
+  }
+}

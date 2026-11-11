@@ -1,0 +1,12 @@
+/dist/
+node_modules/
+# patchwork-system@alphaville, cloned and built by scripts/system.mjs
+/.system/
+/.system.json
+# built by packages/amtext and packages/drafts (pnpm build)
+/public/packages/amtext/dist/
+/public/packages/drafts/dist/
+.pushwork/
+playwright-report/
+test-results/
+.netlify

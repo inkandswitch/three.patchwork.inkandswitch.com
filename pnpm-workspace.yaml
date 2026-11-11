@@ -1,0 +1,18 @@
+packages:
+  - packages/*
+allowBuilds:
+  cbor-extract: true
+  esbuild: true
+minimumReleaseAgeExclude:
+  - "@inkandswitch/*"
+  - "@chee/*"
+  - "@automerge/*"
+  - solid-automerge
+  - cabbages@0.2.11
+# patchwork-system@alphaville's catalog: three's own packages build against
+# the automerge the host gives them
+overrides:
+  "@automerge/automerge": 3.5.0
+  "@automerge/automerge-repo": 3.0.0-alpha.1
+  "@automerge/automerge-repo-subduction": 3.0.0-alpha.1
+  "@automerge/subduction": 0.27.0

@@ -1,0 +1,275 @@
+/* three's themes.
+
+   alto: the xerox alto's 1-bit paper screen. black ink on white, square
+   corners, hard offset shadows, reverse-video selection and a 50% halftone
+   desk behind everything. the only colour is the green and red diffs need.
+
+   amber: an amber-phosphor vt100. one hue at three brightnesses on warm
+   black, everything monospaced, a little bloom on the glyphs and scanlines
+   over the glass.
+
+   each theme only sets the --three-* palette (and its few flourishes); the
+   rest is mapped from it here. */
+
+[theme="three-alto"],
+[theme="three-amber"] {
+	--studio-fill: var(--three-paper);
+	--studio-line: var(--three-ink);
+	--studio-chrome-fill: var(--three-chrome);
+	--studio-chrome-line: var(--three-ink);
+	--studio-offset-tint: var(--three-ink);
+	--studio-offset-tint-amount: 0%;
+
+	--studio-primary: var(--three-accent);
+	--studio-secondary: var(--three-ink-soft);
+	--studio-link: var(--three-accent);
+	--studio-danger: var(--three-bad);
+	--studio-warning: var(--three-warn);
+	--studio-success: var(--three-good);
+	--studio-info: var(--three-ink-soft);
+	--studio-added: var(--three-good);
+	--studio-deleted: var(--three-bad);
+	--studio-modified: var(--three-warn);
+	--studio-selection-fill: var(--three-ink);
+	--studio-selection-line: var(--three-paper);
+	--studio-focus-ring: var(--three-ink);
+	--studio-scrollbar-color: var(--three-ink-faint) var(--three-chrome);
+
+	--studio-family: var(--three-family-text);
+	--studio-family-sans: var(--three-family-ui);
+	--studio-family-ui: var(--three-family-ui);
+	--studio-family-code: var(--three-family-code);
+	--studio-chrome-family: var(--three-family-ui);
+
+	--studio-radius-scale: 0;
+	--studio-border-width: 1px;
+	--studio-border-style: solid;
+
+	--editor-cursor-fill: var(--three-ink);
+
+	--text-editor-fill: var(--three-paper);
+	--text-editor-line: var(--three-ink);
+	--text-editor-cursor-fill: var(--three-ink);
+	--text-editor-selection-fill: var(--three-select);
+	--text-editor-selection-line: var(--three-ink);
+	--text-editor-active-line-fill: var(--three-active-line);
+	--text-editor-active-line-line: var(--three-ink);
+	--text-editor-active-line-fill--gutter: var(--three-active-line);
+	--text-editor-active-line-line--gutter: var(--three-ink);
+	--text-editor-gutter-fill: var(--three-paper);
+	--text-editor-gutter-line: var(--three-ink-faint);
+	--text-editor-gutter-border: var(--three-rule);
+	--text-editor-tooltip-fill: var(--three-chrome);
+	--text-editor-tooltip-color: var(--three-ink);
+
+	--syntax-comment: var(--three-ink-faint);
+	--syntax-style-comment: italic;
+	--syntax-line-comment: var(--three-ink-faint);
+	--syntax-style-line-comment: italic;
+	--syntax-block-comment: var(--three-ink-faint);
+	--syntax-style-block-comment: italic;
+	--syntax-doc-comment: var(--three-ink-faint);
+	--syntax-style-doc-comment: italic;
+	--syntax-quote: var(--three-ink-soft);
+
+	--syntax-meta: var(--three-ink-soft);
+	--syntax-invalid: var(--three-bad);
+
+	--syntax-operator: var(--three-ink);
+	--syntax-punctuation: var(--three-ink-soft);
+	--syntax-angle-bracket: var(--three-ink-soft);
+	--syntax-list: var(--three-ink-soft);
+
+	--syntax-keyword: var(--three-bright);
+	--syntax-control-keyword: var(--three-bright);
+	--syntax-module-keyword: var(--three-bright);
+
+	--syntax-bool: var(--three-bright);
+	--syntax-weight-bool: bold;
+	--syntax-atom: var(--three-bright);
+	--syntax-weight-atom: bold;
+	--syntax-number: var(--three-ink);
+	--syntax-integer: var(--three-ink);
+	--syntax-float: var(--three-ink);
+	--syntax-regexp: var(--three-ink-soft);
+	--syntax-namespace: var(--three-ink);
+
+	--syntax-type-name: var(--three-bright);
+	--syntax-weight-type-name: bold;
+	--syntax-class-name: var(--three-bright);
+	--syntax-weight-class-name: bold;
+	--syntax-type-operator: var(--three-ink-soft);
+
+	--syntax-function--variable-name: var(--three-ink);
+	--syntax-function--property-name: var(--three-ink);
+
+	--syntax-variable-name: var(--three-ink);
+	--syntax-definition--variable-name: var(--three-bright);
+
+	--syntax-string: var(--three-ink-soft);
+	--syntax-fill-string: transparent;
+	--syntax-special--string: var(--three-ink-soft);
+	--syntax-escape: var(--three-bright);
+
+	--syntax-tag-name: var(--three-bright);
+	--syntax-attribute-name: var(--three-ink-soft);
+	--syntax-style-attribute-name: italic;
+
+	--syntax-strong: var(--three-bright);
+	--syntax-weight-strong: bold;
+	--syntax-emphasis: var(--three-ink);
+	--syntax-style-emphasis: italic;
+
+	--syntax-heading: var(--three-bright);
+	--syntax-weight-heading: bold;
+
+	--syntax-link: var(--three-accent);
+	--syntax-style-link: underline;
+
+	--syntax-inserted: var(--three-good);
+	--syntax-deleted: var(--three-bad);
+	--syntax-changed: var(--three-warn);
+	--syntax-content-separator: var(--three-rule);
+}
+
+/* ── alto ─────────────────────────────────────────────────────────────── */
+
+[theme="three-alto"] {
+	color-scheme: light;
+
+	--three-paper: #ffffff;
+	--three-chrome: #ffffff;
+	--three-ink: #000000;
+	--three-bright: #000000;
+	--three-ink-soft: #2b2b2b;
+	--three-ink-faint: #767676;
+	--three-rule: #000000;
+	--three-select: #c6c6c6;
+	--three-active-line: #f2f2f2;
+	--three-accent: #000000;
+	--three-good: #1e6b24;
+	--three-bad: #a31a10;
+	--three-warn: #6e5600;
+
+	/* bravo set its documents in times roman and the alto's menus in
+	   helvetica; gacha, its fixed-width face, is long gone, so courier */
+	--three-family-text: "Times New Roman", Times, "Liberation Serif", serif;
+	--three-family-ui: "Helvetica Neue", Helvetica, Arial, "Liberation Sans",
+		sans-serif;
+	--three-family-code: "Courier Prime", "Courier New", Courier,
+		"Liberation Mono", monospace;
+	--studio-font-size: 15px;
+	--studio-line-height: 1.4;
+	--studio-chrome-letter-spacing: 0;
+
+	/* no blur on a 1-bit screen: shadows are solid black, offset down-right */
+	--studio-shadow-color: #000000;
+	--studio-shadow-sm: 1px 1px 0 #000000;
+	--studio-shadow: 2px 2px 0 #000000;
+	--studio-shadow-md: 3px 3px 0 #000000;
+	--studio-shadow-lg: 4px 4px 0 #000000;
+	--studio-backdrop-blur: 0;
+}
+
+/* 1-bit rules: the ramps' borders and dividers are solid black, not grey.
+   the lighter steps stay as the faintest of tints, for hovers */
+[theme="three-alto"] {
+	--studio-fill-offset-20: #ededed;
+	--studio-fill-offset-30: #000000;
+	--studio-fill-offset-40: #000000;
+	--studio-fill-offset-50: #000000;
+	--studio-chrome-fill-offset-20: #ededed;
+	--studio-chrome-fill-offset-30: #000000;
+	--studio-chrome-fill-offset-40: #000000;
+	--studio-chrome-fill-offset-50: #000000;
+}
+
+/* the sidebar sits on the desk like a window: a black frame down its edge */
+[theme="three-alto"] .frame .sidebar {
+	border-right: 2px solid #000000;
+}
+
+/* the desk: a 50% halftone, wherever no document is open, and wherever the
+   app doesn't cover it */
+[theme="three-alto"] .document-view > .placeholder,
+html[theme="three-alto"] {
+	background-color: #ffffff;
+	background-image: conic-gradient(
+		#000000 25%,
+		#ffffff 0 50%,
+		#000000 0 75%,
+		#ffffff 0
+	);
+	background-size: 2px 2px;
+}
+
+/* ── amber ────────────────────────────────────────────────────────────── */
+
+[theme="three-amber"] {
+	color-scheme: dark;
+
+	/* p3 phosphor (~602nm) at full, normal and dim drive */
+	--three-paper: #0d0800;
+	--three-chrome: #090500;
+	--three-bright: #ffd27a;
+	--three-ink: #ffb000;
+	--three-ink-soft: #cc8a00;
+	--three-ink-faint: #7f5600;
+	--three-rule: #4a3100;
+	--three-select: #4d3300;
+	--three-active-line: #1a1100;
+	--three-accent: #ffb000;
+	/* the diffs stay on the tube: a hotter yellow and a redder orange */
+	--three-good: #ffe27f;
+	--three-bad: #ff6a2b;
+	--three-warn: #ffcf33;
+
+	--three-family-code: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo,
+		Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+	--three-family-text: var(--three-family-code);
+	--three-family-ui: var(--three-family-code);
+	--studio-font-size: 14px;
+	--studio-line-height: 1.5;
+	--studio-chrome-letter-spacing: 0.02em;
+
+	/* nothing casts a shadow on glass; things glow instead */
+	--studio-shadow-color: #ffb000;
+	--studio-shadow-strength: 0;
+	--studio-shadow-sm: 0 0 0 1px var(--three-rule);
+	--studio-shadow: 0 0 0 1px var(--three-rule), 0 0 12px #ffb0001a;
+	--studio-shadow-md: 0 0 0 1px var(--three-rule), 0 0 18px #ffb00024;
+	--studio-shadow-lg: 0 0 0 1px var(--three-rule), 0 0 28px #ffb0002e;
+	--studio-backdrop-blur: 0;
+
+	caret-color: var(--three-ink);
+	/* bloom: the phosphor spills a little past each glyph */
+	text-shadow: 0 0 3px #ffb00066;
+}
+
+html[theme="three-amber"] {
+	background-color: var(--three-paper);
+}
+
+/* scanlines across the glass, over everything and in the way of nothing */
+html[theme="three-amber"] body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: 2147483647;
+	pointer-events: none;
+	background: repeating-linear-gradient(
+		to bottom,
+		transparent 0 2px,
+		#00000038 2px 3px
+	);
+}
+
+/* ── both ─────────────────────────────────────────────────────────────── */
+
+/* selection is reverse video, as it was on both machines */
+[theme="three-alto"] ::selection,
+[theme="three-amber"] ::selection {
+	background: var(--three-ink);
+	color: var(--three-paper);
+	text-shadow: none;
+}

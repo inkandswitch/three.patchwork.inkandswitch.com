@@ -1,0 +1,4 @@
+/* threepane hardcodes a "research grade software" banner; three doesn't want it */
+.frame-shell > .frame-warning-banner {
+	display: none;
+}

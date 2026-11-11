@@ -1,0 +1,12 @@
+{
+	"name": "@three/drafts",
+	"private": true,
+	"version": "0.2.0",
+	"type": "module",
+	"main": "./dist/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/index.js"
+		}
+	}
+}

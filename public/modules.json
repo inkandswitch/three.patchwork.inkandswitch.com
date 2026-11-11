@@ -1,0 +1,28 @@
+{
+	"@patchwork": {
+		"type": "patchwork:module-settings"
+	},
+	"modules": [
+		"./packages/providers/",
+		"./packages/drafts/",
+		"./packages/account/",
+		"./packages/folder/",
+		"./packages/file/",
+		"./packages/packages/",
+		"./packages/settings/",
+		"./packages/sync-indicator/",
+		"./packages/add-doc-to-sidebar-button/",
+		"./packages/doc-openwith/",
+		"./packages/doc-presence/",
+		"./packages/comments-view/",
+		"./packages/threepane/",
+		"./packages/codemirror-base/",
+		"./packages/codemirror-markdown/",
+		"./packages/sideboard/",
+		"./packages/theming/",
+		"./packages/three-themes/",
+		"./packages/catclock/",
+		"./packages/amtext/",
+		"./packages/raw/"
+	]
+}
