@@ -13,7 +13,7 @@ pnpm test
 - `scripts/system.mjs`: the alphaville checkout everything `@inkandswitch/patchwork`
   comes from. `.system/` by default; set `PATCHWORK_SYSTEM_DIRECTORY` to use
   your own (e.g. `../system`), and `pnpm system:update` to pull alphaville again.
-- `packages/drafts`: pkg-base's drafts, ported to automerge-repo 3.
 - `public/packages/three-themes`: Light (peach) and Amber (dark).
 - `vendor/*.patch`: changes to pkg-base packages for automerge-repo 3, made
-  with `scripts/vendor.mjs`. See [docs/automerge-repo-3.md](docs/automerge-repo-3.md).
+  with `scripts/vendor.mjs`, among them `vendor/drafts.patch`, which ports
+  pkg-base's drafts. See [docs/automerge-repo-3.md](docs/automerge-repo-3.md).

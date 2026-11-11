@@ -14,6 +14,7 @@
 //   node scripts/vendor.mjs fetch <name>  fetch .vendor/<name>, with its patch
 //   node scripts/vendor.mjs save <name>   write .vendor/<name>'s changes to
 //                                         vendor/<name>.patch
+//   node scripts/vendor.mjs test <name>   build <name> and run its tests
 //   node scripts/vendor.mjs check         check every patch applies cleanly
 import {spawnSync} from "node:child_process"
 import {createHash} from "node:crypto"
@@ -39,6 +40,7 @@ const packages = {
 	"comments-view": base,
 	"codemirror-base": base,
 	"doc-presence": base,
+	drafts: base,
 }
 
 // a commit needs someone to have made it, and a build machine has no one
@@ -110,9 +112,16 @@ async function build(name) {
 	const stamp = {commit, patch: hash(readPatch(name))}
 	const last = existsSync(stampFile(name)) ? JSON.parse(readFileSync(stampFile(name), "utf8")) : null
 	const out = outDir(name)
-	if (last?.commit === stamp.commit && last?.patch === stamp.patch && existsSync(join(out, "dist"))) return
-
 	const dir = buildDir(name)
+	if (
+		last?.commit === stamp.commit &&
+		last?.patch === stamp.patch &&
+		existsSync(join(out, "package.json")) &&
+		existsSync(join(dir, "package.json"))
+	) {
+		return
+	}
+
 	await fetchSource(name, commit, dir)
 	apply(name, dir)
 	console.log(`vendor: building ${name}`)
@@ -130,7 +139,7 @@ async function build(name) {
 }
 
 const [command, name] = process.argv.slice(2)
-if (command === "fetch" || command === "save") {
+if (command === "fetch" || command === "save" || command === "test") {
 	if (!(name in packages)) throw new Error(`no vendored package "${name}"`)
 }
 if (!command) {
@@ -157,6 +166,10 @@ if (!command) {
 		}
 		console.log(`vendor: ${name}.patch applies`)
 	}
+} else if (command === "test") {
+	// on the patched copy a build makes, so it tests what the site serves
+	await build(name)
+	run("pnpm", ["test"], buildDir(name))
 } else {
-	throw new Error("usage: node scripts/vendor.mjs [fetch|save <name> | check]")
+	throw new Error("usage: node scripts/vendor.mjs [fetch|save|test <name> | check]")
 }

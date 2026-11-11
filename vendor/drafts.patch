@@ -1,0 +1,677 @@
+diff --git a/src/DraftsSidebar.tsx b/src/DraftsSidebar.tsx
+index 8121043..c130e46 100644
+--- a/src/DraftsSidebar.tsx
++++ b/src/DraftsSidebar.tsx
+@@ -45,6 +45,7 @@ import {
+   sameHeads,
+ } from "./change-group-cache";
+ import { ensureMainDraft } from "./draft-docs";
++import { unawaited } from "./unawaited";
+ 
+ // Seed for the read-only `draft:list` subscription until the provider answers.
+ // `main.url` is a placeholder; the Main card displays the host doc url instead.
+@@ -63,7 +64,7 @@ const EMPTY_DRAFT_LIST: DraftList = {
+ 
+ // Shown in the panel footer, logged on load, and stamped into fork
+ // diagnostics; bump on deploy to tell builds apart.
+-const DRAFTS_VERSION = "0.0.45";
++const DRAFTS_VERSION = "0.0.45-three.1";
+ 
+ // Logged at module load so the console shows which build is running even
+ // before the panel renders.
+@@ -168,11 +169,13 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+     if (!handle || disposed) return;
+     setScrubber(null);
+     setBaseliner(null);
+-    handle.change((d) => {
+-      d.checkedOut = url;
+-      // Switching drafts (or to main) returns to the live latest heads.
+-      d.at = null;
+-    });
++    unawaited(
++      handle.change((d) => {
++        d.checkedOut = url;
++        // Switching drafts (or to main) returns to the live latest heads.
++        d.at = null;
++      })
++    );
+   };
+ 
+   const getRepo = (): Repo | undefined =>
+@@ -212,7 +215,7 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+       const checkpoint = await computeCheckpoint(repo, members, head.head, base);
+       // A newer scrub landed while this one was computing; drop it.
+       if (seq !== scrubSeq) return;
+-      handle.change((d) => {
++      await handle.change((d) => {
+         d.checkedOut = draftUrl;
+         d.at = checkpoint;
+       });
+@@ -269,10 +272,12 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+     setBaseliner(null);
+     const draftUrl = selected();
+     const baselines = eyeOpen() && draftUrl ? forkBaselines(draftUrl) : null;
+-    handle.change((d) => {
+-      d.at =
+-        baselines && Object.keys(baselines).length > 0 ? baselines : null;
+-    });
++    unawaited(
++      handle.change((d) => {
++        d.at =
++          baselines && Object.keys(baselines).length > 0 ? baselines : null;
++      })
++    );
+   };
+ 
+   // The eye toggle: show or hide diff highlighting. The eye holds no state of
+@@ -288,20 +293,22 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+       // Close: strip the baselines; a pin (`to`) stays untouched. Baseline-
+       // only entries disappear entirely, so a live view's `at` goes to null.
+       setBaseliner(null);
+-      handle.change((d) => {
+-        if (!d.at) return;
+-        const urls = Object.keys(d.at) as AutomergeUrl[];
+-        if (!urls.some((u) => d.at?.[u]?.to !== undefined)) {
+-          d.at = null;
+-          return;
+-        }
+-        for (const url of urls) {
+-          const entry = d.at[url];
+-          if (!entry) continue;
+-          if (entry.to === undefined) delete d.at[url];
+-          else delete entry.from;
+-        }
+-      });
++      unawaited(
++        handle.change((d) => {
++          if (!d.at) return;
++          const urls = Object.keys(d.at) as AutomergeUrl[];
++          if (!urls.some((u) => d.at?.[u]?.to !== undefined)) {
++            d.at = null;
++            return;
++          }
++          for (const url of urls) {
++            const entry = d.at[url];
++            if (!entry) continue;
++            if (entry.to === undefined) delete d.at[url];
++            else delete entry.from;
++          }
++        })
++      );
+       return;
+     }
+ 
+@@ -324,7 +331,7 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+           beforeTime: s.groupStartTime,
+         });
+         if (seq !== scrubSeq) return;
+-        handle.change((d) => {
++        await handle.change((d) => {
+           d.at = checkpoint;
+         });
+       })();
+@@ -338,14 +345,16 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+       const clonedAt = new Map(
+         membersFor(draftUrl).map((m) => [m.url, m.clonedAt])
+       );
+-      handle.change((d) => {
+-        if (!d.at) return;
+-        for (const url of Object.keys(d.at) as AutomergeUrl[]) {
+-          const entry = d.at[url];
+-          if (!entry) continue;
+-          entry.from = clonedAt.get(url) ?? encodeHeads([]);
+-        }
+-      });
++      unawaited(
++        handle.change((d) => {
++          if (!d.at) return;
++          for (const url of Object.keys(d.at) as AutomergeUrl[]) {
++            const entry = d.at[url];
++            if (!entry) continue;
++            entry.from = clonedAt.get(url) ?? encodeHeads([]);
++          }
++        })
++      );
+       return;
+     }
+ 
+@@ -354,9 +363,11 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+     if (!draftUrl) return;
+     const baselines = forkBaselines(draftUrl);
+     if (Object.keys(baselines).length === 0) return;
+-    handle.change((d) => {
+-      d.at = baselines;
+-    });
++    unawaited(
++      handle.change((d) => {
++        d.at = baselines;
++      })
++    );
+   };
+ 
+   // While the eye is open on a live (unpinned) draft, keep the baseline map
+@@ -376,12 +387,14 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+       (m) => m.clonedAt !== null && !at[m.url]
+     );
+     if (missing.length === 0) return;
+-    handle.change((d) => {
+-      if (!d.at) return;
+-      for (const m of missing) {
+-        if (m.clonedAt) d.at[m.url] = { from: m.clonedAt };
+-      }
+-    });
++    unawaited(
++      handle.change((d) => {
++        if (!d.at) return;
++        for (const m of missing) {
++          if (m.clonedAt) d.at[m.url] = { from: m.clonedAt };
++        }
++      })
++    );
+   });
+ 
+   // Fork the current selection as a new child draft. `atVersion` picks the
+@@ -424,7 +437,7 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+           // clone when forking off a draft), pinned to the version's heads.
+           // Keyed by the original url so baselines and merge-back resolve.
+           handle = await repo.find<unknown>(member.cloneUrl ?? member.url);
+-          const clone = cloneAtVersion(repo, handle, to);
++          const clone = await cloneAtVersion(repo, handle, to);
+           clones[member.url] = { cloneUrl: clone.url, clonedAt: to };
+         } catch (err) {
+           reportForkFailure(
+@@ -442,7 +455,7 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+             member.cloneUrl ?? member.url
+           );
+           const clonedAt = source.heads();
+-          const clone = repo.clone(source);
++          const clone = await repo.clone(source);
+           clones[member.url] = { cloneUrl: clone.url, clonedAt };
+         } catch (err) {
+           console.warn("[drafts] failed to fork member:", member, err);
+@@ -457,18 +470,18 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+     // Default name from a monotonic counter on the main draft, stamped at
+     // creation so numbering stays stable as drafts are merged or deleted.
+     let draftNumber = 1;
+-    mainDraft.change((d) => {
++    await mainDraft.change((d) => {
+       d.draftCounter = (d.draftCounter ?? 0) + 1;
+       draftNumber = d.draftCounter;
+     });
+-    const draft = repo.create<DraftDoc>({
++    const draft = await repo.create<DraftDoc>({
+       "@patchwork": { type: "draft" },
+       name: `Draft ${draftNumber}`,
+       parent: parentHandle.url,
+       drafts: [],
+       clones,
+     });
+-    parentHandle.change((d) => {
++    await parentHandle.change((d) => {
+       d.drafts.push(draft.url);
+     });
+     selectDraft(draft.url);
+@@ -488,7 +501,7 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+     } else {
+       handle = await repo.find<DraftDoc>(url);
+     }
+-    handle.change((d) => {
++    await handle.change((d) => {
+       if (name) d.name = name;
+       else delete d.name;
+     });
+@@ -589,7 +602,7 @@ export function DraftsSidebar(props: { element: HTMLElement }) {
+       if (!docHandle) return;
+       parentHandle = await ensureMainDraft(repo, docHandle);
+     }
+-    parentHandle.change((d) => {
++    await parentHandle.change((d) => {
+       const i = d.drafts.indexOf(draftUrl);
+       if (i >= 0) d.drafts.splice(i, 1);
+     });
+@@ -708,14 +721,14 @@ async function mergeDraft(
+       repo.find<unknown>(targetUrl),
+       repo.find<unknown>(entry.cloneUrl),
+     ]);
+-    target.merge(clone);
++    await target.merge(clone);
+     const mergedAt = target.heads();
+-    draftHandle.change((d) => {
++    await draftHandle.change((d) => {
+       const e = d.clones[originalUrl];
+       if (e) e.mergedAt = mergedAt;
+     });
+   }
+-  draftHandle.change((d) => {
++  await draftHandle.change((d) => {
+     d.mergedAt = Date.now();
+   });
+ 
+@@ -730,13 +743,13 @@ async function mergeDraft(
+     for (const childUrl of children) {
+       try {
+         const child = await repo.find<DraftDoc>(childUrl);
+-        child.change((d) => {
++        await child.change((d) => {
+           d.parent = parentHandle.url;
+         });
+-        parentHandle.change((d) => {
++        await parentHandle.change((d) => {
+           if (!d.drafts.includes(childUrl)) d.drafts.push(childUrl);
+         });
+-        draftHandle.change((d) => {
++        await draftHandle.change((d) => {
+           const i = d.drafts.indexOf(childUrl);
+           if (i >= 0) d.drafts.splice(i, 1);
+         });
+@@ -802,11 +815,11 @@ async function findMergeTarget(
+ // Build a clone of `handle`'s doc pinned to the `to` heads and register it
+ // with the repo. Throws (a plain JS error, no wasm panic) when the pin's
+ // ancestry can't be resolved from the doc's change metadata.
+-function cloneAtVersion(
++async function cloneAtVersion(
+   repo: Repo,
+   handle: DocHandle<unknown>,
+   to: UrlHeads
+-): DocHandle<unknown> {
++): Promise<DocHandle<unknown>> {
+   const doc = handle.doc() as Automerge.Doc<unknown>;
+   const pinHeads = decodeHeads(to);
+ 
+@@ -839,9 +852,10 @@ function cloneAtVersion(
+     );
+   }
+ 
+-  const clone = repo.create<unknown>();
+-  clone.update(() => pinned);
+-  return clone;
++  // automerge-repo 3 handles have no `update()` to swap a doc in, but
++  // importing the pinned doc's bytes makes a new document with exactly that
++  // history — what `repo.clone` does, minus the panicking `fork_at`.
++  return repo.import<unknown>(Automerge.save(pinned));
+ }
+ 
+ // --- Fork-at-version diagnostics --------------------------------------------
+diff --git a/src/actor-attribution.ts b/src/actor-attribution.ts
+index 692ffbc..dffca28 100644
+--- a/src/actor-attribution.ts
++++ b/src/actor-attribution.ts
+@@ -10,6 +10,7 @@ import { subscribe } from "@inkandswitch/patchwork-providers";
+ 
+ import type { ActorAttributionDoc, DraftDoc } from "./draft-types.js";
+ import { editCountsSince } from "./change-group-cache.js";
++import { unawaited } from "./unawaited.js";
+ 
+ // Only the writing client knows which Automerge actor ids are its own. The
+ // recorder watches the docs the user can currently write to (`watch`); each
+@@ -127,9 +128,11 @@ export function createActorRecorder(
+     const existing = attributionHandle.doc()?.actors ?? {};
+     const missing = actorIds.filter((id) => existing[id] !== url);
+     if (missing.length === 0) return;
+-    attributionHandle.change((d) => {
+-      for (const id of missing) d.actors[id] = url;
+-    });
++    unawaited(
++      attributionHandle.change((d) => {
++        for (const id of missing) d.actors[id] = url;
++      })
++    );
+   }
+ }
+ 
+@@ -147,11 +150,11 @@ export async function ensureActorAttribution(
+     return repo.find<ActorAttributionDoc>(existingUrl);
+   }
+ 
+-  const attribution = repo.create<ActorAttributionDoc>({
++  const attribution = await repo.create<ActorAttributionDoc>({
+     "@patchwork": { type: "actor-attribution" },
+     actors: {},
+   });
+-  mainDraftHandle.change((d) => {
++  await mainDraftHandle.change((d) => {
+     if (!d.actorAttributionUrl) d.actorAttributionUrl = attribution.url;
+   });
+   // A concurrent creator may have won the stamp; honor whichever pointer
+diff --git a/src/change-group-cache.ts b/src/change-group-cache.ts
+index afd7207..0008ea8 100644
+--- a/src/change-group-cache.ts
++++ b/src/change-group-cache.ts
+@@ -69,7 +69,7 @@ export async function ensureChangeGroupDoc(
+       (doc.version !== CHANGE_GROUP_DOC_VERSION ||
+         doc.inactivityGapMs !== INACTIVITY_GAP_MS)
+     ) {
+-      handle.change((d) => {
++      await handle.change((d) => {
+         d.version = CHANGE_GROUP_DOC_VERSION;
+         d.inactivityGapMs = INACTIVITY_GAP_MS;
+         d.groups = {};
+@@ -77,21 +77,21 @@ export async function ensureChangeGroupDoc(
+       });
+     }
+     if (!draft?.changeGroupDocUrl) {
+-      draftHandle.change((d) => {
++      await draftHandle.change((d) => {
+         if (!d.changeGroupDocUrl) d.changeGroupDocUrl = existingUrl;
+       });
+     }
+     return handle;
+   }
+ 
+-  const changeGroupHandle = repo.create<ChangeGroupDoc>({
++  const changeGroupHandle = await repo.create<ChangeGroupDoc>({
+     "@patchwork": { type: "change-group" },
+     version: CHANGE_GROUP_DOC_VERSION,
+     inactivityGapMs: INACTIVITY_GAP_MS,
+     groups: {},
+     computedThrough: {},
+   });
+-  draftHandle.change((d) => {
++  await draftHandle.change((d) => {
+     if (!d.changeGroupDocUrl) d.changeGroupDocUrl = changeGroupHandle.url;
+   });
+   // A concurrent creator may have won the stamp; honor whichever pointer
+@@ -667,7 +667,7 @@ export function createChangeGrouper(repo: Repo): ChangeGrouper {
+         ([url, heads]) => !sameHeads(computedThrough[url as AutomergeUrl], heads)
+       );
+       if (stale.length > 0) {
+-        changeGroupHandle.change((d) => {
++        await changeGroupHandle.change((d) => {
+           for (const [url, heads] of stale) {
+             d.computedThrough[url as AutomergeUrl] = heads;
+           }
+@@ -696,7 +696,7 @@ export function createChangeGrouper(repo: Repo): ChangeGrouper {
+         tailOldestMs - secondStored.endTime * 1000 > INACTIVITY_GAP_MS);
+ 
+     if (fastOk) {
+-      appendTail(changeGroupHandle, newestStored, tails, frontier);
++      await appendTail(changeGroupHandle, newestStored, tails, frontier);
+     } else {
+       await rebuildAll(
+         changeGroupHandle,
+@@ -717,7 +717,7 @@ export function createChangeGrouper(repo: Repo): ChangeGrouper {
+     newestStored: ChangeGroup,
+     tailsNewestFirst: PendingChange[],
+     frontier: Record<AutomergeUrl, UrlHeads>
+-  ): void {
++  ): Promise<void> {
+     const tailGroups = splitIntoGroups(tailsNewestFirst);
+     const oldestGroup = tailGroups[tailGroups.length - 1];
+     const oldestGroupOldestMs =
+@@ -728,7 +728,7 @@ export function createChangeGrouper(repo: Repo): ChangeGrouper {
+       oldestGroupOldestMs <= newestStored.endTime * 1000 + INACTIVITY_GAP_MS;
+     const freshGroups = attaches ? tailGroups.slice(0, -1) : tailGroups;
+ 
+-    changeGroupHandle.change((d) => {
++    return changeGroupHandle.change((d) => {
+       for (const rows of freshGroups) {
+         const group = buildGroup(rows);
+         d.groups[group.id] = group;
+@@ -846,7 +846,7 @@ export function createChangeGrouper(repo: Repo): ChangeGrouper {
+       })
+       .map(buildGroup);
+ 
+-    changeGroupHandle.change((d) => {
++    await changeGroupHandle.change((d) => {
+       for (const group of fresh) d.groups[group.id] = group;
+       for (const id of Object.keys(d.groups)) {
+         if (!expectedIds.has(id)) delete d.groups[id];
+diff --git a/src/draft-docs.ts b/src/draft-docs.ts
+index f931234..9155398 100644
+--- a/src/draft-docs.ts
++++ b/src/draft-docs.ts
+@@ -14,14 +14,14 @@ export async function ensureMainDraft(
+   const existingUrl = docHandle.doc()?.["@patchwork"]?.mainDraftUrl;
+   if (existingUrl) return repo.find<DraftDoc>(existingUrl);
+ 
+-  const mainDraft = repo.create<DraftDoc>({
++  const mainDraft = await repo.create<DraftDoc>({
+     "@patchwork": { type: "draft" },
+     isMain: true,
+     parent: docHandle.url,
+     drafts: [],
+     clones: {},
+   });
+-  docHandle.change((d) => {
++  await docHandle.change((d) => {
+     // Mutate `@patchwork` in place. Reassigning a spread would carry
+     // references to existing Automerge objects into a new object.
+     if (!d["@patchwork"]) d["@patchwork"] = {};
+diff --git a/src/draft-routing.ts b/src/draft-routing.ts
+index a01531b..810de64 100644
+--- a/src/draft-routing.ts
++++ b/src/draft-routing.ts
+@@ -5,6 +5,7 @@ import {
+ } from "@automerge/automerge-repo/slim";
+ 
+ import type { CheckedOutDraft } from "./draft-types.js";
++import { unawaited } from "./unawaited.js";
+ 
+ // Keeps the ephemeral checkout selection and the `draft=` URL parameter in
+ // sync. Deep links remain pending until their draft appears in the synced tree.
+@@ -66,9 +67,11 @@ export function createDraftRouter(
+ 
+   function selectDraft(selected: AutomergeUrl | null): void {
+     if (checkedOutHandle.doc()?.checkedOut === selected) return;
+-    checkedOutHandle.change((d) => {
+-      d.checkedOut = selected;
+-    });
++    unawaited(
++      checkedOutHandle.change((d) => {
++        d.checkedOut = selected;
++      })
++    );
+   }
+ 
+   function syncSelectionToUrl(): void {
+diff --git a/src/providers/DraftOverlayProvider.ts b/src/providers/DraftOverlayProvider.ts
+index 63947e8..4538561 100644
+--- a/src/providers/DraftOverlayProvider.ts
++++ b/src/providers/DraftOverlayProvider.ts
+@@ -298,10 +298,10 @@ export const DraftOverlayProvider = (element: HTMLElement) => {
+ 
+       const originalHandle = await liveRepo.find<unknown>(original);
+       const clonedAt = originalHandle.heads();
+-      const clone = liveRepo.clone(originalHandle);
++      const clone = await liveRepo.clone(originalHandle);
+       const cloneUrl = canonicalUrl(clone.url);
+ 
+-      handle.change((d) => {
++      await handle.change((d) => {
+         d.clones[original] = { cloneUrl, clonedAt };
+       });
+ 
+diff --git a/src/providers/DraftStateProvider.ts b/src/providers/DraftStateProvider.ts
+index 6cb0b8e..cd60a0b 100644
+--- a/src/providers/DraftStateProvider.ts
++++ b/src/providers/DraftStateProvider.ts
+@@ -32,8 +32,9 @@ import {
+   createActorRecorder,
+   ensureActorAttribution,
+ } from "../actor-attribution.js";
+-import { createDraftRouter } from "../draft-routing.js";
++import { createDraftRouter, type DraftRouter } from "../draft-routing.js";
+ import { ensureMainDraft } from "../draft-docs.js";
++import { unawaited } from "../unawaited.js";
+ 
+ const ROOT_DOC_SELECTOR = "draft:root-doc";
+ const CHECKED_OUT_SELECTOR = "draft:checked-out";
+@@ -50,21 +51,29 @@ const EMPTY_HEADS: UrlHeads = encodeHeads([]);
+ // host remounts this provider on every doc switch; a fresh doc per mount
+ // would be stored and synced to every peer each time (delete is local-only),
+ // so the doc is kept and reset to main on remount instead.
+-const checkoutDocs = new Map<AutomergeUrl, DocHandle<CheckedOutDraft>>();
++// automerge-repo 3 creates documents asynchronously, so what's kept is the
++// creation itself: a remount that lands while the first is still creating
++// shares it rather than making a second doc.
++const checkoutDocs = new Map<AutomergeUrl, Promise<DocHandle<CheckedOutDraft>>>();
+ 
+-function checkoutFor(
++async function checkoutFor(
+   repo: Repo,
+   docUrl: AutomergeUrl
+-): DocHandle<CheckedOutDraft> {
+-  let handle = checkoutDocs.get(docUrl);
+-  if (!handle) {
+-    handle = repo.create<CheckedOutDraft>({ checkedOut: null });
+-    checkoutDocs.set(docUrl, handle);
+-    return handle;
++): Promise<DocHandle<CheckedOutDraft>> {
++  const existing = checkoutDocs.get(docUrl);
++  if (!existing) {
++    const created = repo.create<CheckedOutDraft>({ checkedOut: null });
++    checkoutDocs.set(docUrl, created);
++    // a failed create mustn't stick: the next mount tries again
++    created.catch(() => {
++      if (checkoutDocs.get(docUrl) === created) checkoutDocs.delete(docUrl);
++    });
++    return created;
+   }
++  const handle = await existing;
+   const doc = handle.doc();
+   if (doc?.checkedOut != null || doc?.at != null) {
+-    handle.change((d) => {
++    await handle.change((d) => {
+       d.checkedOut = null;
+       d.at = null;
+     });
+@@ -121,8 +130,10 @@ export const DraftStateProvider = (element: HTMLElement) => {
+   // identity `clones` back the "main" member list.
+   let mainDraftHandle: DocHandle<DraftDoc> | null = null;
+ 
+-  const checkedOutHandle = checkoutFor(repo, docUrl);
+-  const draftRouter = createDraftRouter(checkedOutHandle);
++  // The ephemeral checkout doc (and the `draft=` router that follows it) is
++  // created asynchronously; until it's there, the selection reads as main.
++  let checkedOutHandle: DocHandle<CheckedOutDraft> | null = null;
++  let draftRouter: DraftRouter | null = null;
+ 
+   // `draft:baseline` subscribers, keyed by canonical target url. Each is served the
+   // checkpoint's per-doc `from` (see `currentBaseline`). Re-emitted whenever
+@@ -220,7 +231,19 @@ export const DraftStateProvider = (element: HTMLElement) => {
+     console.error(`[drafts] failed to initialize draft-state provider:`, err);
+   });
+ 
+-  checkedOutHandle.on("change", onCheckedOutChange);
++  const checkedOutReady: Promise<DocHandle<CheckedOutDraft> | null> =
++    checkoutFor(repo, docUrl).then((handle) => {
++      if (disposed) return null;
++      checkedOutHandle = handle;
++      draftRouter = createDraftRouter(handle);
++      draftRouter.updateAvailableDrafts(orderedDraftUrls);
++      handle.on("change", onCheckedOutChange);
++      onCheckedOutChange();
++      return handle;
++    });
++  checkedOutReady.catch((err) => {
++    console.error(`[drafts] failed to create the checkout doc:`, err);
++  });
+ 
+   const onSubscribe = (event: SubscribeEvent) => {
+     const { type } = event.detail.selector;
+@@ -234,7 +257,12 @@ export const DraftStateProvider = (element: HTMLElement) => {
+ 
+     if (type === CHECKED_OUT_SELECTOR) {
+       accept<AutomergeUrl>(event, (respond) => {
+-        respond(checkedOutHandle.url);
++        void checkedOutReady.then(
++          (handle) => {
++            if (handle && !disposed) respond(handle.url);
++          },
++          () => {}
++        );
+       });
+       return;
+     }
+@@ -291,14 +319,16 @@ export const DraftStateProvider = (element: HTMLElement) => {
+     if (cloneSyncTimer !== null) clearTimeout(cloneSyncTimer);
+     changeGrouper.dispose();
+     actorRecorder.dispose();
+-    draftRouter.dispose();
++    draftRouter?.dispose();
+     element.removeEventListener("patchwork:subscribe", onSubscribe);
+     element.removeEventListener("patchwork:mounted", onMounted);
+     element.removeEventListener("patchwork:unmounted", onUnmounted);
+     hostDocHandle?.off("change", onHostDocChange);
+     mainDraftHandle?.off("change", onTrackedChange);
+     for (const [, h] of trackedDrafts) h.off("change", onTrackedChange);
+-    checkedOutHandle.off("change", onCheckedOutChange);
++    checkedOutHandle?.off("change", onCheckedOutChange);
++    checkedOutHandle = null;
++    draftRouter = null;
+     mainDraftHandle = null;
+     trackedDrafts.clear();
+     listSubscribers.clear();
+@@ -397,7 +427,7 @@ export const DraftStateProvider = (element: HTMLElement) => {
+           trackedDrafts.delete(url);
+         }
+         orderedDraftUrls = allDrafts;
+-        draftRouter.updateAvailableDrafts(allDrafts);
++        draftRouter?.updateAvailableDrafts(allDrafts);
+       } catch (err) {
+         console.error("[drafts] rewalk failed:", err);
+       } finally {
+@@ -433,7 +463,7 @@ export const DraftStateProvider = (element: HTMLElement) => {
+     const urls = [...mountCounts.keys()].filter(
+       (url) => skipVerdicts.get(url) === false
+     );
+-    const selected = checkedOutHandle.doc()?.checkedOut ?? null;
++    const selected = checkedOutHandle?.doc()?.checkedOut ?? null;
+     const clones = selected
+       ? trackedDrafts.get(selected)?.doc()?.clones
+       : undefined;
+@@ -456,7 +486,7 @@ export const DraftStateProvider = (element: HTMLElement) => {
+         rootDocUrl: docUrl,
+       });
+     }
+-    const selected = checkedOutHandle.doc()?.checkedOut ?? null;
++    const selected = checkedOutHandle?.doc()?.checkedOut ?? null;
+     const ordered =
+       selected && orderedDraftUrls.includes(selected)
+         ? [selected, ...orderedDraftUrls.filter((u) => u !== selected)]
+@@ -553,7 +583,7 @@ export const DraftStateProvider = (element: HTMLElement) => {
+   // fork-point fallback: baselines exist only when explicitly written into
+   // the checkpoint, so "diffs hidden" is simply their absence.
+   function currentBaseline(target: AutomergeUrl): Baseline {
+-    const entry = checkedOutHandle.doc()?.at?.[target];
++    const entry = checkedOutHandle?.doc()?.at?.[target];
+     return { heads: entry?.from ?? null };
+   }
+ 
+@@ -635,13 +665,15 @@ export const DraftStateProvider = (element: HTMLElement) => {
+       (url) => skipVerdicts.get(url) === false && !existing[url]
+     );
+     if (toAdd.length === 0) return;
+-    mainDraftHandle.change((d) => {
+-      for (const url of toAdd) {
+-        if (!d.clones[url]) {
+-          d.clones[url] = { cloneUrl: url, clonedAt: EMPTY_HEADS };
++    unawaited(
++      mainDraftHandle.change((d) => {
++        for (const url of toAdd) {
++          if (!d.clones[url]) {
++            d.clones[url] = { cloneUrl: url, clonedAt: EMPTY_HEADS };
++          }
+         }
+-      }
+-    });
++      })
++    );
+   }
+ };
+ 
+diff --git a/src/unawaited.ts b/src/unawaited.ts
+new file mode 100644
+index 0000000..2e1a334
+--- /dev/null
++++ b/src/unawaited.ts
+@@ -0,0 +1,9 @@
++// automerge-repo 3's `handle.change()` mutates the doc and fires `change` at
++// once, and returns a promise that settles when the change is stored. Event
++// handlers that don't wait for that still have to hear about a failed save
++// rather than leave the rejection unhandled, so they hand the promise here.
++export function unawaited(stored: Promise<unknown>): void {
++  stored.catch((err) => {
++    console.error("[drafts] a change couldn't be stored:", err);
++  });
++}

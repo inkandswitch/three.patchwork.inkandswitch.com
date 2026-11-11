@@ -3,9 +3,8 @@ node_modules/
 # patchwork-system@alphaville, cloned and built by scripts/system.mjs
 /.system/
 /.system.json
-# built by packages/amtext and packages/drafts (pnpm build)
+# built by packages/amtext (pnpm build)
 /public/packages/amtext/dist/
-/public/packages/drafts/dist/
 .pushwork/
 playwright-report/
 test-results/
@@ -21,4 +20,5 @@ test-results/
 /public/packages/comments-view/
 /public/packages/codemirror-base/
 /public/packages/doc-presence/
+/public/packages/drafts/
 .smoke-preview.config.mjs

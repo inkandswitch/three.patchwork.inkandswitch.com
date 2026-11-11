@@ -217,10 +217,8 @@ if (base) {
 
 build("node", ["scripts/vendor.mjs"], root, env)
 build("pnpm", ["--filter", "amtext", "build:patchwork"], root, env)
-build("pnpm", ["--filter", "@three/drafts", "build"], root, env)
 
 if (ownCore) run("core", "pnpm", ["watch"], core, watchEnv)
-run("drafts", "pnpm", ["--filter", "@three/drafts", "dev"], root, watchEnv)
 if (base) run("base", "pnpm", ["watch"], base, watchEnv)
 const site = run("site", "pnpm", ["exec", "vite"], root, watchEnv)
 let siteOutput = ""
