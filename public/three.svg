@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 417 417" xmlns="http://www.w3.org/2000/svg">
     <!-- three: the regular patchwork logo, each shape a checkerboard of its
-         own colour and white, on one grid across the whole logo -->
+         own colour and a darker shade of it, on one grid across the whole logo -->
     <defs>
         <pattern id="checker-42c4d2" width="69.5" height="69.5" patternUnits="userSpaceOnUse">
-            <rect width="69.5" height="69.5" fill="#ffffff"/>
+            <rect width="69.5" height="69.5" fill="#297a82"/>
             <rect width="34.75" height="34.75" fill="#42c4d2"/>
             <rect x="34.75" y="34.75" width="34.75" height="34.75" fill="#42c4d2"/>
         </pattern>
         <pattern id="checker-ff69a5" width="69.5" height="69.5" patternUnits="userSpaceOnUse">
-            <rect width="69.5" height="69.5" fill="#ffffff"/>
+            <rect width="69.5" height="69.5" fill="#9e4166"/>
             <rect width="34.75" height="34.75" fill="#ff69a5"/>
             <rect x="34.75" y="34.75" width="34.75" height="34.75" fill="#ff69a5"/>
         </pattern>
         <pattern id="checker-6fa6ff" width="69.5" height="69.5" patternUnits="userSpaceOnUse">
-            <rect width="69.5" height="69.5" fill="#ffffff"/>
+            <rect width="69.5" height="69.5" fill="#45679e"/>
             <rect width="34.75" height="34.75" fill="#6fa6ff"/>
             <rect x="34.75" y="34.75" width="34.75" height="34.75" fill="#6fa6ff"/>
         </pattern>
         <pattern id="checker-f78e38" width="69.5" height="69.5" patternUnits="userSpaceOnUse">
-            <rect width="69.5" height="69.5" fill="#ffffff"/>
+            <rect width="69.5" height="69.5" fill="#995823"/>
             <rect width="34.75" height="34.75" fill="#f78e38"/>
             <rect x="34.75" y="34.75" width="34.75" height="34.75" fill="#f78e38"/>
         </pattern>
