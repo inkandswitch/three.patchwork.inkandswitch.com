@@ -12,7 +12,7 @@
 		"dev": "node scripts/dev.mjs",
 		"system": "node scripts/system.mjs",
 		"system:update": "node scripts/system.mjs update",
-		"build": "node scripts/system.mjs && pnpm --filter amtext build:patchwork && pnpm --filter @three/drafts build && vite build",
+		"build": "node scripts/system.mjs && node scripts/vendor.mjs && pnpm --filter amtext build:patchwork && pnpm --filter @three/drafts build && vite build",
 		"preview": "vite preview",
 		"serve": "vite preview",
 		"sync": "pnpm build && pushwork sync",

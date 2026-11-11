@@ -215,6 +215,7 @@ if (base) {
 	ensureBase(base)
 }
 
+build("node", ["scripts/vendor.mjs"], root, env)
 build("pnpm", ["--filter", "amtext", "build:patchwork"], root, env)
 build("pnpm", ["--filter", "@three/drafts", "build"], root, env)
 

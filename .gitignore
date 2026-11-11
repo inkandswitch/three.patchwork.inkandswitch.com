@@ -10,5 +10,13 @@ node_modules/
 playwright-report/
 test-results/
 .netlify
-# pkg-base sources the vendor/*.patch files are made against (scripts/vendor.mjs fetch)
+# pkg-base packages, and what scripts/vendor.mjs builds from them and vendor/*.patch
 /.vendor/
+/public/packages/providers/
+/public/packages/account/
+/public/packages/threepane/
+/public/packages/codemirror-markdown/
+/public/packages/sideboard/
+/public/packages/sync-indicator/
+/public/packages/comments-view/
+.smoke-preview.config.mjs

@@ -1,14 +1,23 @@
-// Makes the vendor/<name>.patch files: three's changes to pkg-base packages
-// for automerge-repo 3. Each package is fetched at the commit below into
-// .vendor/<name> (a git repo, with that commit as its first commit, and its
-// patch applied if there is one); edit it there and save the diff.
+// three's changes to pkg-base packages for automerge-repo 3, as
+// vendor/<name>.patch, and the packages built from them. A build fetches each
+// package at the commit below into .vendor/build/<name>, applies its patch,
+// installs it from its own lockfile, builds it, and copies its package.json,
+// dist/ and example.js into public/packages/<name>/, where it takes the place
+// of pkg-base's copy. A package whose commit and patch haven't changed since
+// its last build is left alone.
 //
+// To change a patch, fetch the package into .vendor/<name> (a git repo, with
+// that commit as its first commit, and its patch applied), edit it there, and
+// save the diff. Builds never touch .vendor/<name>.
+//
+//   node scripts/vendor.mjs               build what has changed
 //   node scripts/vendor.mjs fetch <name>  fetch .vendor/<name>, with its patch
 //   node scripts/vendor.mjs save <name>   write .vendor/<name>'s changes to
 //                                         vendor/<name>.patch
 //   node scripts/vendor.mjs check         check every patch applies cleanly
 import {spawnSync} from "node:child_process"
-import {existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs"
+import {createHash} from "node:crypto"
+import {cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs"
 import {tmpdir} from "node:os"
 import {dirname, join, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
@@ -42,7 +51,16 @@ function run(command, args, cwd, options = {}) {
 }
 
 const sourceDir = name => join(root, ".vendor", name)
+const buildDir = name => join(root, ".vendor", "build", name)
 const patchFile = name => join(root, "vendor", `${name}.patch`)
+const outDir = name => join(root, "public", "packages", name)
+// what public/packages/<name> was last built from
+const stampFile = name => join(root, ".vendor", "build", `${name}.json`)
+const readPatch = name => (existsSync(patchFile(name)) ? readFileSync(patchFile(name), "utf8") : "")
+const hash = text => createHash("sha256").update(text).digest("hex")
+
+// copied from the built package, as pkg-base's own static tree has them
+const shipped = ["package.json", "dist", "example.js"]
 
 // everything in .vendor/<name> that differs from the commit it was fetched at
 function changes(dir) {
@@ -70,19 +88,43 @@ async function fetchSource(name, commit, dir) {
 	run("git", [...git, "commit", "--quiet", "--no-verify", "-m", `${repo}@${commit}`], dir)
 }
 
-function apply(name) {
+function apply(name, dir = sourceDir(name)) {
 	const patch = patchFile(name)
 	if (!existsSync(patch)) return
-	run("git", ["apply", "--whitespace=nowarn", patch], sourceDir(name))
+	run("git", ["apply", "--whitespace=nowarn", patch], dir)
+}
+
+async function build(name) {
+	const commit = packages[name]
+	const stamp = {commit, patch: hash(readPatch(name))}
+	const last = existsSync(stampFile(name)) ? JSON.parse(readFileSync(stampFile(name), "utf8")) : null
+	const out = outDir(name)
+	if (last?.commit === stamp.commit && last?.patch === stamp.patch && existsSync(join(out, "dist"))) return
+
+	const dir = buildDir(name)
+	await fetchSource(name, commit, dir)
+	apply(name, dir)
+	console.log(`vendor: building ${name}`)
+	run("pnpm", ["install", "--frozen-lockfile"], dir)
+	run("pnpm", ["run", "build"], dir)
+	rmSync(out, {recursive: true, force: true})
+	mkdirSync(out, {recursive: true})
+	for (const file of shipped) {
+		if (existsSync(join(dir, file))) cpSync(join(dir, file), join(out, file), {recursive: true})
+	}
+	writeFileSync(stampFile(name), JSON.stringify(stamp))
 }
 
 const [command, name] = process.argv.slice(2)
 if (command === "fetch" || command === "save") {
 	if (!(name in packages)) throw new Error(`no vendored package "${name}"`)
 }
-if (command === "fetch") {
+if (!command) {
+	for (const name of Object.keys(packages)) await build(name)
+} else if (command === "fetch") {
 	await fetchSource(name, packages[name], sourceDir(name))
 	apply(name)
+	run("pnpm", ["install", "--frozen-lockfile"], sourceDir(name))
 } else if (command === "save") {
 	writeFileSync(patchFile(name), changes(sourceDir(name)))
 	console.log(`vendor: wrote vendor/${name}.patch`)
@@ -102,5 +144,5 @@ if (command === "fetch") {
 		console.log(`vendor: ${name}.patch applies`)
 	}
 } else {
-	throw new Error("usage: node scripts/vendor.mjs fetch|save <name>, or check")
+	throw new Error("usage: node scripts/vendor.mjs [fetch|save <name> | check]")
 }
